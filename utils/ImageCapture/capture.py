@@ -2,6 +2,7 @@ import pyrealsense2 as rs
 from PIL import Image as pimg
 import numpy as np
 import time
+import winsound
 
 
 pipeline = rs.pipeline()
@@ -21,6 +22,9 @@ try:
             depth_frame = frames.get_depth_frame()
             color_frame = frames.get_color_frame()
     
+            frequency =440  # Set Frequency To 2500 Hertz
+            duration = 500  # Set Duration To 1000 ms == 1 second
+            winsound.Beep(frequency, duration)
             # Convert images to numpy arrays
             depth_image = np.asanyarray(depth_frame.get_data())
             color_image = np.asanyarray(color_frame.get_data())
@@ -29,7 +33,7 @@ try:
             
             for y in range(720):
                 for x in range(1280):
-                    pixel = (255/3000) * depth_image[y,x]
+                    pixel = (255/1000) * depth_image[y,x]
                     if pixel >255:
                         pixel = 255
                     depth_image_tf[y,x] = pixel
@@ -42,6 +46,8 @@ try:
             timestamp = str(time.time())
             color_image_ready_to_save.save('color'+timestamp+'.png')
             depth_image_ready_to_save.save('depth'+timestamp+'.png')
+
+
             input('saved '+timestamp)
 
 finally:
