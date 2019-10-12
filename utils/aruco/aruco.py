@@ -3,31 +3,77 @@ from PIL import Image as pimg
 import numpy as np
 import cv2.aruco as aruco
 import cv2
+import time
 
-aruco_coordinates_0 = np.array([[-72.1, -468.5, -400], [-72.0, -425.4, -400], [-28.9, -425.4, -400], [-28.8, -468.5, -400]])
-aruco_coordinates_1 = np.array([[503.5, 100, -400], [503.5, 56.8, -400], [460, 56.7, -400], [460, 100, -400]])
-aruco_coordinates_2 = np.array([[189, 61, -400], [145.9, 59.9, -400], [145.9, 103, -400], [188.4, 103, -400]])
-aruco_coordinates_3 = np.array([[470, -472.2, -400], [469.3, -429.9, -400], [511.9, -429.3, -400], [512.5, -472, -400]])
-markers = np.array([aruco_coordinates_0, aruco_coordinates_1, aruco_coordinates_2, aruco_coordinates_3], dtype=np.float32)
-aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_50)
-ids = np.float32(np.array([0, 1, 2, 3]))
-board = aruco.Board_create(markers, aruco_dict, ids)
 
-pil_image = pimg.open("img.png")
-open_cv_image = np.array(pil_image)
-# Convert RGB to BGR
-opencv_image = open_cv_image[:, :, ::-1].copy()
-opencv_image_gray = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2GRAY)
+class Calibration:
+    def __init__(self):
+        aruco_coordinates_0 = np.array([[-72.1, -468.5, -400], [-72.0, -425.4, -400], [-28.9, -425.4, -400], [-28.8, -468.5, -400]])
+        aruco_coordinates_1 = np.array([[503.5, 100, -400], [503.5, 56.8, -400], [460, 56.7, -400], [460, 100, -400]])
+        aruco_coordinates_2 = np.array([[189, 61, -400], [145.9, 59.9, -400], [145.9, 103, -400], [188.4, 103, -400]])
+        aruco_coordinates_3 = np.array([[470, -472.2, -400], [469.3, -429.9, -400], [511.9, -429.3, -400], [512.5, -472, -400]])
+        self.markers = np.array([aruco_coordinates_0, aruco_coordinates_1, aruco_coordinates_2, aruco_coordinates_3], dtype=np.float32)
+        self.aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_50)
+        # ids = np.float32(np.array([0, 1, 2, 3]))
+        # board = aruco.Board_create(self.markers, aruco_dict, ids)
 
-default_intrinsic_matrix = np.array([[1393.77, 0, 956.754], [0, 1393.14, 545.3], [0, 0, 1]])
-intrinsic_matrix = np.array([[1393.77, 0, 956.754], [0, 1393.14, 545.3], [0, 0, 1]])
-default_distortion = np.array([0, 0, 0, 0, 0], dtype=np.float32)
-distortion = default_distortion.T
-optimized_intrinsic_matrix, roi = cv2.getOptimalNewCameraMatrix(intrinsic_matrix, default_distortion, (1920,1080), 1, (1920,1080))
+        self.default_intrinsic_matrix = np.array([[1393.77, 0, 956.754], [0, 1393.14, 545.3], [0, 0, 1]])
+        intrinsic_matrix = np.array([[1393.77, 0, 956.754], [0, 1393.14, 545.3], [0, 0, 1]])
+        default_distortion = np.array([0, 0, 0, 0, 0], dtype=np.float32)
+        self.distortion = default_distortion.T
 
-(corners, detected_ids, rejected_image_points) = aruco.detectMarkers(opencv_image_gray, aruco_dict)
-corners = np.array(corners).reshape((len(detected_ids), 4, 2))
-detected_ids = np.array(detected_ids).reshape((len(detected_ids)))
+    def calibrate(self, np_image, x_coordinate, y_coordinate):
+        timer = time.time()
+
+        opencv_image = np_image[:, :, ::-1].copy()
+        opencv_image_gray = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2GRAY)
+
+        (corners, detected_ids, rejected_image_points) = aruco.detectMarkers(opencv_image_gray, self.aruco_dict)
+        corners = np.array(corners).reshape((len(detected_ids), 4, 2))
+        detected_ids = np.array(detected_ids).reshape((len(detected_ids)))
+        if len(detected_ids) <= 3:
+            print("[WARNING] calibration found less than 4 markers")
+        assert (len(detected_ids) >= 3), "Cannot work with 2 or less markers"
+
+        marker_world_coordinates = None
+        image_coordinates = None
+        for i in range(len(detected_ids)):
+            if i == 0:
+                marker_world_coordinates = self.markers[detected_ids[i]]
+                image_coordinates = corners[i]
+            else:
+                marker_world_coordinates = np.concatenate((marker_world_coordinates, self.markers[detected_ids[i]]))
+                image_coordinates = np.concatenate((image_coordinates, corners[i]))
+
+        error, r_vector, t_vector = cv2.solvePnP(marker_world_coordinates, image_coordinates, self.default_intrinsic_matrix, self.distortion)
+
+        r_matrix, jac = cv2.Rodrigues(r_vector)
+        r_matrix_inverse = np.linalg.inv(r_matrix)
+        intrinsic_matrix_inverse = np.linalg.inv(self.default_intrinsic_matrix)
+
+        scaling_factor = 750
+        i = 0
+        while True:
+            pixel_coordinates = np.array([[x_coordinate, y_coordinate, 1]]).T
+            pixel_coordinates = scaling_factor * pixel_coordinates
+            xyz_c = intrinsic_matrix_inverse.dot(pixel_coordinates)
+            xyz_c = xyz_c - t_vector
+            world_coordinates = r_matrix_inverse.dot(xyz_c)
+            # print(scaling_factor)
+            i += 1
+            # print(i)
+            # print(world_coordinates)
+            if world_coordinates[2] > -399.5:
+                scaling_factor += 1
+            elif world_coordinates[2] < -400.5:
+                scaling_factor -= 1
+            elif i > 100:
+                raise Exception("scaling factor finding is taking loner than 100 iterations, should be under 50")
+            else:
+                break
+        print("[INFO] Calibration took %.2f seconds" % (time.time() - timer))
+        return world_coordinates
+
 
 """
 marker0 = np.array([[236,1049],[236, 972],[311, 971],[311, 1049]], dtype=np.float32)
@@ -37,85 +83,40 @@ marker1 = np.array([[1243, 17],[1245, 88],[1171, 90],[1169, 17]], dtype=np.float
 corners2 = [marker0, marker3, marker2, marker1]
 """
 
-world_coordinates = None
-image_coordinates = None
-for i in range(len(detected_ids)):
-    if i == 0:
-        world_coordinates = markers[detected_ids[i]]
-        image_coordinates = corners[i]
-    else:
-        print(i)
-        print(detected_ids[i])
-        world_coordinates = np.concatenate((world_coordinates, markers[detected_ids[i]]))
-        image_coordinates = np.concatenate((image_coordinates, corners[i]))
-
-error, r_vector, t_vector = cv2.solvePnP(world_coordinates, image_coordinates, optimized_intrinsic_matrix, distortion)
-
-#print(corners)
-#print(detected_ids)
-
-#rvec,tvec,c = aruco.estimatePoseSingleMarkers(corners, 50, default_intrinsics, distortion)
-#aruco.drawAxis(opencv_image_gray, default_intrinsics, distortion, rvec[3], tvec[3], 50)
-#cv2.imshow("image", opencv_image_gray)
-
-
-#(error, intrinsic_matrix, distortion, rvecs, tvecs) = aruco.calibrateCameraAruco(corners, detected_ids, np.array([len(detected_ids)]), board, opencv_image_gray.shape, intrinsic_matrix, distortion, flags=cv2.CALIB_USE_INTRINSIC_GUESS)
-#rvecs = np.array([rvecs[0][0], rvecs[0][1], rvecs[0][2]]) #opencv stupid
-#tvecs = np.array([tvecs[0][0],tvecs[0][1],tvecs[0][1]], dtype=np.float32) #opencv stupid
-
-#print(rvecs)
-#print(tvecs)
-#print(intrinsic_matrix)
-#print(distortion)
-
-
-x = 1218
-y = 1036
-pixel_coordinates = np.array([[x, y, 1]])
-pixel_coordinates = pixel_coordinates.T
-
-rodrigues, jac = cv2.Rodrigues(r_vector)
-rodrigues_inverse = np.linalg.inv(rodrigues)
-rodrigues_translation = np.column_stack((rodrigues, t_vector))
-projection_matrix = default_intrinsic_matrix.dot(rodrigues_translation)
-intrinsics_inverse = np.linalg.inv(default_intrinsic_matrix)
-
-inverse_newcam_mtx = np.linalg.inv(optimized_intrinsic_matrix)
-
+"""
+rt_matrix = np.column_stack((r_matrix, t_vector))
+projection_matrix = default_intrinsic_matrix.dot(rt_matrix)
 xyz = np.array([[1000,500,-400,1.0]], dtype=np.float32)
 xyz = xyz.T
 suv = projection_matrix.dot(xyz)
 scaling_factor = suv[2,0]
 print(scaling_factor)
+"""
+if __name__ == "__main__":
+    calibration = Calibration()
 
-scaling_factor = 767
+    pil_image = pimg.open("img.png")
+    np_image = np.array(pil_image)
 
-pixel_coordinates = scaling_factor*pixel_coordinates
-xyz_c = inverse_newcam_mtx.dot(pixel_coordinates)
-xyz_c = xyz_c-t_vector
-world_coordinates = rodrigues_inverse.dot(xyz_c)
-print(world_coordinates)
+    print(calibration.calibrate(np_image, 1000, 500))
 
+    exit()
+    pipeline = rs.pipeline()
+    cfg = rs.config()
+    cfg.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
+    cfg.enable_stream(rs.stream.color, 1920, 1080, rs.format.rgb8, 30)
+    profile = pipeline.start(cfg)
 
-print("DONE")
-exit()
+    try:
+        for i in range(30):
+            frames = pipeline.wait_for_frames()
 
-pipeline = rs.pipeline()
-cfg = rs.config()
-cfg.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
-cfg.enable_stream(rs.stream.color, 1920, 1080, rs.format.rgb8, 30)
-profile = pipeline.start(cfg)
-
-try:
-    for i in range(30):
         frames = pipeline.wait_for_frames()
+        depth_frame = frames.get_depth_frame()
+        color_frame = frames.get_color_frame()
 
-    frames = pipeline.wait_for_frames()
-    depth_frame = frames.get_depth_frame()
-    color_frame = frames.get_color_frame()
+        depth_image = np.asanyarray(depth_frame.get_data())
+        color_image = np.asanyarray(color_frame.get_data())
 
-    depth_image = np.asanyarray(depth_frame.get_data())
-    color_image = np.asanyarray(color_frame.get_data())
-
-finally:
-    pipeline.stop()
+    finally:
+        pipeline.stop()
