@@ -5,9 +5,11 @@ import cv2.aruco as aruco
 import cv2
 import time
 
+# based on this guide: https://www.fdxlabs.com/calculate-x-y-z-real-world-coordinates-from-a-single-camera-using-opencv/
 
 class Calibration:
     def __init__(self):
+        # marker locations in robot world frame
         aruco_coordinates_0 = np.array([[-72.1, -468.5, -400], [-72.0, -425.4, -400], [-28.9, -425.4, -400], [-28.8, -468.5, -400]])
         aruco_coordinates_1 = np.array([[503.5, 100, -400], [503.5, 56.8, -400], [460, 56.7, -400], [460, 100, -400]])
         aruco_coordinates_2 = np.array([[189, 61, -400], [145.9, 59.9, -400], [145.9, 103, -400], [188.4, 103, -400]])
@@ -17,24 +19,28 @@ class Calibration:
         # ids = np.float32(np.array([0, 1, 2, 3]))
         # board = aruco.Board_create(self.markers, aruco_dict, ids)
 
+        # intrinsic matrix reported by realsense sdk
         self.default_intrinsic_matrix = np.array([[1393.77, 0, 956.754], [0, 1393.14, 545.3], [0, 0, 1]])
         intrinsic_matrix = np.array([[1393.77, 0, 956.754], [0, 1393.14, 545.3], [0, 0, 1]])
+        # in theory the image is undistorted in HW in the camera
         default_distortion = np.array([0, 0, 0, 0, 0], dtype=np.float32)
         self.distortion = default_distortion.T
 
     def calibrate(self, np_image, x_coordinate, y_coordinate):
         timer = time.time()
 
+        # RGB to BGR, then grayscale
         opencv_image = np_image[:, :, ::-1].copy()
         opencv_image_gray = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2GRAY)
 
         (corners, detected_ids, rejected_image_points) = aruco.detectMarkers(opencv_image_gray, self.aruco_dict)
-        corners = np.array(corners).reshape((len(detected_ids), 4, 2))
-        detected_ids = np.array(detected_ids).reshape((len(detected_ids)))
+        corners = np.array(corners).reshape((len(detected_ids), 4, 2)) #opencv stupid
+        detected_ids = np.array(detected_ids).reshape((len(detected_ids))) #opencv stupid
         if len(detected_ids) <= 3:
             print("[WARNING] calibration found less than 4 markers")
         assert (len(detected_ids) >= 3), "Cannot work with 2 or less markers"
 
+        #putting all the coordinates into arrays understood by solvePNP
         marker_world_coordinates = None
         image_coordinates = None
         for i in range(len(detected_ids)):
@@ -45,12 +51,14 @@ class Calibration:
                 marker_world_coordinates = np.concatenate((marker_world_coordinates, self.markers[detected_ids[i]]))
                 image_coordinates = np.concatenate((image_coordinates, corners[i]))
 
+        # finding exstrinsic camera parameters
         error, r_vector, t_vector = cv2.solvePnP(marker_world_coordinates, image_coordinates, self.default_intrinsic_matrix, self.distortion)
 
         r_matrix, jac = cv2.Rodrigues(r_vector)
         r_matrix_inverse = np.linalg.inv(r_matrix)
         intrinsic_matrix_inverse = np.linalg.inv(self.default_intrinsic_matrix)
 
+        # finding correct scaling factor by adjusting it until the calculated Z is very close to -400, mathematically correct way didn't work ¯\_(ツ)_/¯
         scaling_factor = 750
         i = 0
         while True:
