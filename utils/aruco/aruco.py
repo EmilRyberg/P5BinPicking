@@ -10,10 +10,10 @@ import time
 class Calibration:
     def __init__(self):
         # marker locations in robot world frame
-        aruco_coordinates_0 = np.array([[-72.1, -468.5, -400], [-72.0, -425.4, -400], [-28.9, -425.4, -400], [-28.8, -468.5, -400]])
-        aruco_coordinates_1 = np.array([[503.5, 100, -400], [503.5, 56.8, -400], [460, 56.7, -400], [460, 100, -400]])
-        aruco_coordinates_2 = np.array([[189, 61, -400], [145.9, 59.9, -400], [145.9, 103, -400], [188.4, 103, -400]])
-        aruco_coordinates_3 = np.array([[470, -472.2, -400], [469.3, -429.9, -400], [511.9, -429.3, -400], [512.5, -472, -400]])
+        aruco_coordinates_0 = np.array([[-380.7, -278.2, 0], [-350.30, -248.1, 0], [-320.1, -278.6, 0], [-350.3, -308.8, 0]])
+        aruco_coordinates_1 = np.array([[395.4, -252.2, 0], [426.7, -283.7, 0], [396.2, -313.5, 0], [366.1, -282.9, 0]])
+        aruco_coordinates_2 = np.array([[175.7, -90.0, 0], [145.1, -60.0, 0], [174.6, -29.3, 0], [205.8, -60.0, 0]])
+        aruco_coordinates_3 = np.array([[-0.3, -664.4, 0], [29.5, -634.2, 0], [60.2, -664.7, 0], [30.4, -694.9, 0]])
         self.markers = np.array([aruco_coordinates_0, aruco_coordinates_1, aruco_coordinates_2, aruco_coordinates_3], dtype=np.float32)
         self.aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_50)
         # ids = np.float32(np.array([0, 1, 2, 3]))
@@ -58,8 +58,8 @@ class Calibration:
         r_matrix_inverse = np.linalg.inv(r_matrix)
         intrinsic_matrix_inverse = np.linalg.inv(self.default_intrinsic_matrix)
 
-        # finding correct scaling factor by adjusting it until the calculated Z is very close to -400, mathematically correct way didn't work ¯\_(ツ)_/¯
-        scaling_factor = 750
+        # finding correct scaling factor by adjusting it until the calculated Z is very close to 0, mathematically correct way didn't work ¯\_(ツ)_/¯
+        scaling_factor = 1185
         i = 0
         while True:
             pixel_coordinates = np.array([[x_coordinate, y_coordinate, 1]]).T
@@ -67,7 +67,7 @@ class Calibration:
             xyz_c = intrinsic_matrix_inverse.dot(pixel_coordinates)
             xyz_c = xyz_c - t_vector
             world_coordinates = r_matrix_inverse.dot(xyz_c)
-            # print(scaling_factor)
+            print(scaling_factor)
             i += 1
             # print(i)
             # print(world_coordinates)
