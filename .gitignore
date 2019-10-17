@@ -6,3 +6,5 @@ utils/YoloDataConverter/data/
 utils/aruco/.idea/
 
 .idea/
+
+__pycache__/
