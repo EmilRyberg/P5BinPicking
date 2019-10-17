@@ -71,11 +71,11 @@ class Calibration:
             i += 1
             # print(i)
             # print(world_coordinates)
-            if world_coordinates[2] > -399.5:
+            if world_coordinates[2] > 0.5:
                 scaling_factor += 1
-            elif world_coordinates[2] < -400.5:
+            elif world_coordinates[2] < -0.5:
                 scaling_factor -= 1
-            elif i > 100:
+            elif i > 1000:
                 raise Exception("scaling factor finding is taking loner than 100 iterations, should be under 50")
             else:
                 break
@@ -103,10 +103,10 @@ print(scaling_factor)
 if __name__ == "__main__":
     calibration = Calibration()
 
-    pil_image = pimg.open("img.png")
+    pil_image = pimg.open("img3.png")
     np_image = np.array(pil_image)
 
-    print(calibration.calibrate(np_image, 1000, 500))
+    print(calibration.calibrate(np_image, 1035, 294))
 
     exit()
     pipeline = rs.pipeline()
