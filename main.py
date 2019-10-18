@@ -1,4 +1,6 @@
 from utils import Utils
+from move_robot import MoveRobot
+
 NUMBER_OF_PARTS = 4
 BIG_GRIPPER = 0
 SUCTION = 1
@@ -12,25 +14,29 @@ class Controller():
         self.colour_id = None
         self.location = None
         self.orientation = None
+        self.fixture_x = 20
+        self.fixture_y = 15
         self.utils = Utils()
+        self.move_robot = MoveRobot()
         print("[I] Controller running")
 
     def main_flow(self, colour_id):
         if not self.in_zero_position:
-            self.move_arm(0.0, 0.0) #Move to zero position
+            self.move_robot.move_to_zero() #Move to zero position
             self.in_zero_position = True
         for i in range(0, NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
             self.part_id=i
-            position, orientation = self.get_part_location(self.part_id)
-            self.move_arm(position, orientation)
-            self.pick_up(self.part_id)
+            x, y, orientation = self.get_part_location(self.part_id)
+            #print("[D]: Position: ", position, " orientation = ", orientation)
+            self.move_arm(x, y, orientation, self.part_id)
+            #self.pick_up(self.part_id)
             self.place_part(self.part_id)
-        position, orientation = self.get_part_location(self.colour_id) #3: black, 4: white, 5: blue
-        self.move_arm(position, orientation)
-        self.pick_up(self.colour_id)
+        x, y, orientation = self.get_part_location(self.colour_id) #3: black, 4: white, 5: blue
+        self.move_arm(x, y, orientation, self.colour_id)
+        #self.pick_up(self.colour_id)
         self.place_part(self.colour_id)
 
-    def pick_up(self, part_id):
+    """def pick_up(self, part_id):
         if part_id == 0:
             tool = "big gripper"
             print("[I] big gripper to pick up ", self.utils.part_id_to_name(part_id))
@@ -45,7 +51,7 @@ class Controller():
             print("[I] big gripper to pick up ", self.utils.part_id_to_name(part_id))
         else:
             print("[WARNING] wrong part. ID recieved: ", part_id)
-            return
+            return"""
 
     def place_part(self, part_id):
         if part_id==0:
@@ -58,15 +64,18 @@ class Controller():
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
         else:
             print("[WARNING] wrong part. ID recieved: ", part_id)
+        self.move_robot.place(self.fixture_x, self.fixture_y, part_id)
 
-    def move_arm(self, position, orientation):
+    def move_arm(self, x, y, orientation, part_id):
         print("[I] Moving arm")
+        self.move_robot.grip(x, y, orientation, part_id)
         self.in_zero_position = False
 
     def get_part_location(self, part_id):
-        location = (10.5, 20.1)
+        x = 10.5
+        y = 20.1
         orientation = 1
-        return location, orientation
+        return x, y, orientation
 
 controller = Controller()
 
