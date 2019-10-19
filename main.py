@@ -7,6 +7,7 @@ SUCTION = 1
 SMALL_GRIPPER = 2
 FINAL_COVER = 3
 
+
 class Controller():
     def __init__(self):
         self.in_zero_position = False
@@ -54,11 +55,11 @@ class Controller():
             return"""
 
     def place_part(self, part_id):
-        if part_id==0:
+        if part_id == 0:
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
-        elif part_id==1:
+        elif part_id == 1:
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
-        elif part_id==2:
+        elif part_id == 2:
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
         elif 2 < part_id < 6:
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
@@ -76,6 +77,7 @@ class Controller():
         y = 20.1
         orientation = 1
         return x, y, orientation
+
 
 controller = Controller()
 
@@ -95,7 +97,7 @@ while True:
         controller.colour_id = 5
         controller.main_flow(controller.colour_id)
     elif command == "zero":
-        controller.move_arm(0,0)
+        controller.move_arm(0, 0)
     elif command == "quit":
         break
     else:
