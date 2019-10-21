@@ -60,7 +60,7 @@ class Vision:
             counter += 1
 
         
-        return item
+        return part
 
 
             
