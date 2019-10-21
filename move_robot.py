@@ -28,21 +28,22 @@ class MoveRobot:
         self.gripper_open_pin = 0  # TODO update pins
         self.gripper_close_pin = 0
         self.suction_enable_pin = 0
-        self.home_pose = [0, 0, 200, 0, 0, 0]  # TODO update
-        self.move_out_of_view_pose = [0, 0, 200, 0, 0, 0]
-        self.default_orientation = [0, 0, 0] # TODO update
+        self.home_pose = [35, -350, 300, 3.14, 0, 0]  # TODO update
+        self.move_out_of_view_pose = [-350, -35, 300, 3.14, 0, 0]
+        self.default_orientation = [3.14, 0, 0]  # TODO update
 
     def movel(self, pose, acc=1.0, vel=0.05, wait=True, relative=False):
-        pose[0] *= 0.001
-        pose[1] *= 0.001
-        pose[2] *= 0.001
-        self.robot.movel(pose, acc=acc, vel=vel, wait=wait, relative=relative, threshold=threshold)
+        pose_local = pose[:]
+        pose_local[0] *= 0.001
+        pose_local[1] *= 0.001
+        pose_local[2] *= 0.001
+        self.robot.movel(pose_local, acc=acc, vel=vel, wait=wait, relative=relative)
 
-    def move_to_home(self, speed=1):
-        self.movel(self.home_pose, acc=1, vel=speed)
+    def move_to_home(self, speed=1.0):
+        self.movel(self.home_pose, acc=1.0, vel=speed)
 
-    def move_out_of_view(self, speed=1):
-        self.movel(self.move_out_of_view_pose, acc=1, vel=speed)
+    def move_out_of_view(self, speed=1.0):
+        self.movel(self.move_out_of_view_pose, acc=1.0, vel=speed)
 
     def open_gripper(self):
         self.robot.set_digital_out(self.gripper_open_pin, True)
@@ -61,18 +62,25 @@ class MoveRobot:
     def grip(self, x, y, type):
         # TODO figure out how to handle part types' tcp offsets
         self.move_to_home()
-        self.movel([x, y, 20]+self.default_orientation, acc=1, vel=1)
+        self.movel([x, y, 20] + self.default_orientation, acc=1, vel=1)
         self.open_gripper()
-        self.movel([x, y, 0.5]+self.default_orientation, acc=0.1, vel=0.02)
+        self.movel([x, y, 0.5] + self.default_orientation, acc=0.1, vel=0.02)
         self.close_gripper()
-        self.movel([x, y, 20]+self.default_orientation, acc=0.1, vel=0.02)
+        self.movel([x, y, 20] + self.default_orientation, acc=0.1, vel=0.02)
 
     def place(self, x, y, type):
         self.move_to_home()
-        self.movel([x, y, 20]+self.default_orientation, acc=1, vel=1)
-        self.movel([x, y, 0.5]+self.default_orientation, acc=0.1, vel=0.02)
+        self.movel([x, y, 20] + self.default_orientation, acc=1, vel=1)
+        self.movel([x, y, 0.5] + self.default_orientation, acc=0.1, vel=0.02)
         self.open_gripper()
-        self.movel([x, y, 20]+self.default_orientation, acc=0.1, vel=0.02)
+        self.movel([x, y, 20] + self.default_orientation, acc=0.1, vel=0.02)
+
 
 if __name__ == "__main__":
     robot = MoveRobot("192.168.137.195")
+    time.sleep(1)
+
+    robot.move_to_home()
+    robot.move_out_of_view()
+    robot.grip(300,-300,0)
+    robot.place(-140, -110,0)
