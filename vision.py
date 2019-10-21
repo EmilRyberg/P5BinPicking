@@ -40,20 +40,23 @@ class Vision:
             pipeline.stop()
 
 
-    def detect_objects(self):
+    def detect_object(self, part_id):
         results=self.detector.detect('webcam_capture.png')
 
         #result is an array of dictionaries
         counter=0
         for x in range(len(results)):
             d=results[counter]
-            classify=d['class']
-            prob=d['prob']
-            width=d['right']-d['left']
-            height=d['bottom']-d['top']
-            x_coord=width+d['left']
-            y_coord=height+d['top']
-            item=(classify, prob, width, height, x_coord, y_coord,)
+            if d['class'] == part_id:
+                classify=d['class']
+                prob=d['prob']
+                width=d['right']-d['left']
+                height=d['bottom']-d['top']
+                x_coord=width/2 + d['left']
+                y_coord=height/2 + d['top']
+                part=(classify, prob, width, height, x_coord, y_coord)
+                break
+
             counter += 1
 
         
