@@ -1,11 +1,14 @@
 from utils import Utils
 from move_robot import MoveRobot
+from part_enum import PartEnum
 
 NUMBER_OF_PARTS = 4
 BIG_GRIPPER = 0
 SUCTION = 1
 SMALL_GRIPPER = 2
 FINAL_COVER = 3
+FIXTURE_X = 20
+FIXTURE_Y = 15
 
 
 class Controller():
@@ -15,10 +18,9 @@ class Controller():
         self.colour_id = None
         self.location = None
         self.orientation = None
-        self.fixture_x = 20
-        self.fixture_y = 15
         self.utils = Utils()
         self.move_robot = MoveRobot()
+        self.enum = PartEnum()
         print("[I] Controller running")
 
     def main_flow(self, colour_id):
@@ -65,7 +67,7 @@ class Controller():
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
         else:
             print("[WARNING] wrong part. ID recieved: ", part_id)
-        self.move_robot.place(self.fixture_x, self.fixture_y, part_id)
+        self.move_robot.place(FIXTURE_X, FIXTURE_Y, part_id)
 
     def move_arm(self, x, y, orientation, part_id):
         print("[I] Moving arm")
@@ -88,13 +90,13 @@ while True:
         print("Possible commands are: \nblack: assemble phone with black cover \nwhite: assemble phone with white cover \n"
             "blue: assemble phone with blue cover \nzero: put the robot in zero position \nquit: close the program")
     elif command == "black":
-        controller.colour_id = 3
+        controller.colour_id = controller.enum.BLACKCOVER
         controller.main_flow(controller.colour_id)
     elif command == "white":
-        controller.colour_id = 4
+        controller.colour_id = controller.enum.WHITECOVER
         controller.main_flow(controller.colour_id)
     elif command == "blue":
-        controller.colour_id = 5
+        controller.colour_id = controller.enum.BLUECOVER
         controller.main_flow(controller.colour_id)
     elif command == "zero":
         controller.move_arm(0, 0)
