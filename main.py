@@ -13,7 +13,7 @@ FIXTURE_X = 20
 FIXTURE_Y = 15
 
 
-class Controller():
+class Controller:
     def __init__(self):
         self.in_zero_position = False
         self.part_id = None
@@ -21,16 +21,16 @@ class Controller():
         self.location = None
         self.orientation = None
         self.utils = Utils()
-        self.move_robot = MoveRobot()
+        self.move_robot = MoveRobot("192.168.1.148")
         self.vision = Vision()
 
         print("[I] Controller running")
 
     def main_flow(self, colour_id):
         if not self.in_zero_position:
-            self.move_robot.move_to_zero() #Move to zero position
+            self.move_robot.move_out_of_view() #Move to zero position
             self.in_zero_position = True
-        for i in range(0, NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
+        for i in range(NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
             self.part_id=i
             x, y, orientation = self.get_part_location(self.part_id)
             #print("[D]: Position: ", position, " orientation = ", orientation)

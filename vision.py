@@ -6,11 +6,14 @@ import numpy as np
 HORIZONTAL = 0
 VERTICAL = 1
 
+YOLOCFGPATH = '/home/rob/Desktop/P5BinPicking/DarkNet/'
+
 class Vision:
     def __init__(self):
-        self.rs.pipeline()
+        self.rs = rs.pipeline()
         self.cfg=rs.config()
-        self.detector=Detector('<path-to-.data>', '<path-to-.cfg','<path-to-.weights>')
+        self.part = (-1, -1, -1)
+        self.detector=Detector(YOLOCFGPATH+'cfg/obj.data', YOLOCFGPATH+'cfg/yolov3-tiny.cfg',YOLOCFGPATH+'yolov3-tiny_final.weights')
         self.counter = 0
         self.class_id1 = 0
         self.class_id2 = 0
@@ -23,10 +26,10 @@ class Vision:
         try:
             # Wait for a coherent pair of frames: depth and color
             for i in range(30):
-                frames = pipeline.wait_for_frames()
+                frames = self.rs.wait_for_frames()
 
             while True:
-                frames = pipeline.wait_for_frames()
+                frames = self.rs.wait_for_frames()
 
                 color_frame = frames.get_color_frame()
 
@@ -65,10 +68,11 @@ class Vision:
                 else:
                     orientation = HORIZONTAL
                     print("[W] Could not determine orientation, using 1 as default")
-                part=(x_coord, y_coord, orientation)
+                self.part=(x_coord, y_coord, orientation)
                 break
             self.counter += 1
-        return part
+        print(self.part)
+        return self.part
 
 
             
