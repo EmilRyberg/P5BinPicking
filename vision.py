@@ -3,12 +3,17 @@ import pyrealsense2 as rs
 from PIL import Image as pimg
 import numpy as np
 
+HORIZONTAL = 0
+VERTICAL = 1
 
 class Vision:
     def __init__(self):
         self.rs.pipeline()
         self.cfg=rs.config()
         self.detector=Detector('<path-to-.data>', '<path-to-.cfg','<path-to-.weights>')
+        self.counter = 0
+        self.class_id1 = 0
+        self.class_id2 = 0
 
     def capture_image(self):
         #basically the capture script benedek made
@@ -40,26 +45,29 @@ class Vision:
             pipeline.stop()
 
 
-    def detect_object(self, part_id):
+    def detect_object(self, class_id):
         results=self.detector.detect('webcam_capture.png')
-
+        self.class_id1, self.class_id2 = class_id
         #result is an array of dictionaries
-        counter=0
         for x in range(len(results)):
-            d=results[counter]
-            if d['class'] == part_id:
+            d = results[self.counter]
+            if ((d['class'] == self.class_id1 or d['class'] == self.class_id2) and d['prob'] > 0.8):
                 classify=d['class']
                 prob=d['prob']
                 width=d['right']-d['left']
                 height=d['bottom']-d['top']
                 x_coord=width/2 + d['left']
                 y_coord=height/2 + d['top']
-                part=(classify, prob, width, height, x_coord, y_coord)
+                if height > width:
+                    orientation = HORIZONTAL
+                elif width > height:
+                    orientation = VERTICAL
+                else:
+                    orientation = HORIZONTAL
+                    print("[W] Could not determine orientation, using 1 as default")
+                part=(x_coord, y_coord, orientation)
                 break
-
-            counter += 1
-
-        
+            self.counter += 1
         return part
 
 

@@ -1,6 +1,8 @@
 from utils import Utils
 from move_robot import MoveRobot
+from vision import Vision
 from part_enum import PartEnum
+from classconverter import ClassConverter
 
 NUMBER_OF_PARTS = 4
 BIG_GRIPPER = 0
@@ -20,7 +22,8 @@ class Controller():
         self.orientation = None
         self.utils = Utils()
         self.move_robot = MoveRobot()
-        self.enum = PartEnum()
+        self.vision = Vision()
+
         print("[I] Controller running")
 
     def main_flow(self, colour_id):
@@ -75,9 +78,7 @@ class Controller():
         self.in_zero_position = False
 
     def get_part_location(self, part_id):
-        x = 10.5
-        y = 20.1
-        orientation = 1
+        x, y, orientation = self.vision.detect_object(ClassConverter.convert_part_id(part_id))
         return x, y, orientation
 
 
@@ -90,13 +91,13 @@ while True:
         print("Possible commands are: \nblack: assemble phone with black cover \nwhite: assemble phone with white cover \n"
             "blue: assemble phone with blue cover \nzero: put the robot in zero position \nquit: close the program")
     elif command == "black":
-        controller.colour_id = controller.enum.BLACKCOVER
+        controller.colour_id = PartEnum.BLACKCOVER
         controller.main_flow(controller.colour_id)
     elif command == "white":
-        controller.colour_id = controller.enum.WHITECOVER
+        controller.colour_id = PartEnum.WHITECOVER
         controller.main_flow(controller.colour_id)
     elif command == "blue":
-        controller.colour_id = controller.enum.BLUECOVER
+        controller.colour_id = PartEnum.BLUECOVER
         controller.main_flow(controller.colour_id)
     elif command == "zero":
         controller.move_arm(0, 0)
@@ -104,5 +105,3 @@ while True:
         break
     else:
         print("Invalid command, please try again")
-
-
