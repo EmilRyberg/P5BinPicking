@@ -3,6 +3,9 @@ from move_robot import MoveRobot
 from vision import Vision
 from part_enum import PartEnum
 from classconverter import ClassConverter
+from aruco import Calibration
+from PIL import Image as pimg
+import numpy as np
 
 NUMBER_OF_PARTS = 4
 BIG_GRIPPER = 0
@@ -23,6 +26,7 @@ class Controller:
         self.utils = Utils()
         self.move_robot = MoveRobot("192.168.1.148")
         self.vision = Vision()
+        self.aruco = Calibration()
 
         print("[I] Controller running")
 
@@ -40,6 +44,9 @@ class Controller:
             self.place_part(self.part_id)"""
         self.part_id = 0
         x, y, orientation = self.get_part_location(self.part_id)
+        pil_image = pimg.open("/home/rob/Desktop/P5BinPicking/DarkNet/webcam_capture.png")
+        np_image = np.array(pil_image)
+        x, y = self.aruco.calibrate(np_image, x, y)
         # print("[D]: Position: ", position, " orientation = ", orientation)
         self.move_arm(x, y, orientation, self.part_id)
         self.place_part(self.part_id)
