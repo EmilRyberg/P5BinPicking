@@ -30,6 +30,7 @@ class Controller:
         if not self.in_zero_position:
             self.move_robot.move_out_of_view() #Move to zero position
             self.in_zero_position = True
+            self.vision.capture_image()
         """for i in range(NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
             self.part_id=i
             x, y, orientation = self.get_part_location(self.part_id)

@@ -38,7 +38,7 @@ class Vision:
 
                 color_image_ready_to_save = pimg.fromarray(color_image, 'RGB')
 
-                color_image_ready_to_save.save('webcam_capture.png')
+                color_image_ready_to_save.save(YOLOCFGPATH+'webcam_capture.png')
 
                 input('Capture and image')
 
@@ -49,7 +49,7 @@ class Vision:
 
 
     def detect_object(self, class_id):
-        results=self.detector.detect('webcam_capture.png')
+        results=self.detector.detect(YOLOCFGPATH+'webcam_capture.png')
         self.class_id1, self.class_id2 = class_id
         #result is an array of dictionaries
         for x in range(len(results)):
