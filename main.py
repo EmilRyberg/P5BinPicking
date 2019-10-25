@@ -9,8 +9,8 @@ BIG_GRIPPER = 0
 SUCTION = 1
 SMALL_GRIPPER = 2
 FINAL_COVER = 3
-FIXTURE_X = 20
-FIXTURE_Y = 15
+FIXTURE_X = -140
+FIXTURE_Y = -110
 
 
 class Controller:
@@ -30,13 +30,18 @@ class Controller:
         if not self.in_zero_position:
             self.move_robot.move_out_of_view() #Move to zero position
             self.in_zero_position = True
-        for i in range(NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
+        """for i in range(NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
             self.part_id=i
             x, y, orientation = self.get_part_location(self.part_id)
             #print("[D]: Position: ", position, " orientation = ", orientation)
             self.move_arm(x, y, orientation, self.part_id)
             #self.pick_up(self.part_id)
-            self.place_part(self.part_id)
+            self.place_part(self.part_id)"""
+        self.part_id = 0
+        x, y, orientation = self.get_part_location(self.part_id)
+        # print("[D]: Position: ", position, " orientation = ", orientation)
+        self.move_arm(x, y, orientation, self.part_id)
+        self.place_part(self.part_id)
         x, y, orientation = self.get_part_location(self.colour_id) #3: black, 4: white, 5: blue
         self.move_arm(x, y, orientation, self.colour_id)
         #self.pick_up(self.colour_id)
