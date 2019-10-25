@@ -489,3 +489,12 @@ class URRobot(object):
         Move down in csys z
         """
         self.up(-z, acc, vel)
+
+
+"""
+fuses rpy -> orientation (0 along x), 90, 0
+
+covers rpy -> 180, 0, orientation (0 along x)
+
+
+"""
