@@ -1,17 +1,22 @@
 from utils import Utils
 from move_robot import MoveRobot
+from vision import Vision
 from part_enum import PartEnum
+from classconverter import ClassConverter
+from aruco import Calibration
+from PIL import Image as pimg
+import numpy as np
 
 NUMBER_OF_PARTS = 4
 BIG_GRIPPER = 0
 SUCTION = 1
 SMALL_GRIPPER = 2
 FINAL_COVER = 3
-FIXTURE_X = 20
-FIXTURE_Y = 15
+FIXTURE_X = 255
+FIXTURE_Y = -320
 
 
-class Controller():
+class Controller:
     def __init__(self):
         self.in_zero_position = False
         self.part_id = None
@@ -19,22 +24,34 @@ class Controller():
         self.location = None
         self.orientation = None
         self.utils = Utils()
-        self.move_robot = MoveRobot()
-        self.enum = PartEnum()
+        self.move_robot = MoveRobot("192.168.1.148")
+        self.vision = Vision()
+        self.aruco = Calibration()
+
         print("[I] Controller running")
 
     def main_flow(self, colour_id):
         if not self.in_zero_position:
-            self.move_robot.move_to_zero() #Move to zero position
+            self.move_robot.move_out_of_view() #Move to zero position
             self.in_zero_position = True
-        for i in range(0, NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
+            self.vision.capture_image()
+        """for i in range(NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
             self.part_id=i
             x, y, orientation = self.get_part_location(self.part_id)
             #print("[D]: Position: ", position, " orientation = ", orientation)
             self.move_arm(x, y, orientation, self.part_id)
             #self.pick_up(self.part_id)
-            self.place_part(self.part_id)
+            self.place_part(self.part_id)"""
+        self.part_id = 0
+        x, y, orientation = self.get_part_location(self.part_id)
+        pil_image = pimg.open("/home/rob/Desktop/P5BinPicking/DarkNet/webcam_capture.png")
+        np_image = np.array(pil_image)
+        x, y, _ = self.aruco.calibrate(np_image, x, y)
+        # print("[D]: Position: ", position, " orientation = ", orientation)
+        self.move_arm(x, y, orientation, self.part_id)
+        self.place_part(self.part_id)
         x, y, orientation = self.get_part_location(self.colour_id) #3: black, 4: white, 5: blue
+        x, y, _ = self.aruco.calibrate(np_image, x, y)
         self.move_arm(x, y, orientation, self.colour_id)
         #self.pick_up(self.colour_id)
         self.place_part(self.colour_id)
@@ -67,7 +84,11 @@ class Controller():
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
         else:
             print("[WARNING] wrong part. ID recieved: ", part_id)
-        self.move_robot.place(FIXTURE_X, FIXTURE_Y, part_id)
+
+        if part_id == 0:
+            self.move_robot.place(FIXTURE_X, FIXTURE_Y, part_id)
+        else:
+            self.move_robot.place(FIXTURE_X, FIXTURE_Y, part_id, 30)
 
     def move_arm(self, x, y, orientation, part_id):
         print("[I] Moving arm")
@@ -75,9 +96,7 @@ class Controller():
         self.in_zero_position = False
 
     def get_part_location(self, part_id):
-        x = 10.5
-        y = 20.1
-        orientation = 1
+        x, y, orientation = self.vision.detect_object(ClassConverter.convert_part_id(part_id))
         return x, y, orientation
 
 
@@ -90,13 +109,13 @@ while True:
         print("Possible commands are: \nblack: assemble phone with black cover \nwhite: assemble phone with white cover \n"
             "blue: assemble phone with blue cover \nzero: put the robot in zero position \nquit: close the program")
     elif command == "black":
-        controller.colour_id = controller.enum.BLACKCOVER
+        controller.colour_id = PartEnum.BLACKCOVER.value
         controller.main_flow(controller.colour_id)
     elif command == "white":
-        controller.colour_id = controller.enum.WHITECOVER
+        controller.colour_id = PartEnum.WHITECOVER.value
         controller.main_flow(controller.colour_id)
     elif command == "blue":
-        controller.colour_id = controller.enum.BLUECOVER
+        controller.colour_id = PartEnum.BLUECOVER.value
         controller.main_flow(controller.colour_id)
     elif command == "zero":
         controller.move_arm(0, 0)
@@ -104,5 +123,3 @@ while True:
         break
     else:
         print("Invalid command, please try again")
-
-

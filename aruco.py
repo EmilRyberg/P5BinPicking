@@ -80,7 +80,7 @@ class Calibration:
             else:
                 break
         print("[INFO] Calibration took %.2f seconds" % (time.time() - timer))
-        return world_coordinates
+        return world_coordinates[0][0], world_coordinates[1][0], world_coordinates[2][0]
 
 
 """
