@@ -37,16 +37,22 @@ class Controller:
         """for i in range(NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
             self.part_id=i
             x, y, orientation = self.get_part_location(self.part_id)
+            if x is None:
+                return
             #print("[D]: Position: ", position, " orientation = ", orientation)
             self.move_arm(x, y, orientation, self.part_id)
             self.place_part(self.part_id)"""
         #Following 8 lines are only used until the move robot can handle fuse and pcb
         self.part_id = PartEnum.BACKCOVER.value
         x, y, orientation = self.get_part_location(self.part_id)
+        if x is None:
+            return
         # print("[D]: Position: ", position, " orientation = ", orientation)
         self.move_arm(x, y, orientation, self.part_id)
         self.place_part(self.part_id)
         x, y, orientation = self.get_part_location(self.colour_id) #3: black, 4: white, 5: blue
+        if x is None:
+            return
         self.move_arm(x, y, orientation, self.colour_id)
         self.place_part(self.colour_id)
 
@@ -79,7 +85,7 @@ class Controller:
         x, y, _ = self.aruco.calibrate(self.np_image, x, y)
         if x == -1 and y == -1:
             print("[W]: Could not find required part in image, please try again. Part: ", self.utils.part_id_to_name(part_id))
-            self.choose_action()
+            return None, None, None
         else:
             return x, y, orientation
 
