@@ -77,32 +77,36 @@ class Controller:
         x, y, orientation = self.vision.detect_object(ClassConverter.convert_part_id(part_id))
         x, y, _ = self.aruco.calibrate(self.np_image, x, y)
         if x == -1 and y == -1:
-            print("[W]: COULD NOT FIND PART IN IMAGE")
-            exit(1)
+            print("[W]: Could not find required part in image, please try again. Part: ", self.utils.part_id_to_name(part_id))
+            self.choose_action()
         else:
             return x, y, orientation
+
+    def choose_action(self):
+        print("Please write a command (write 'help' for a list of commands):")
+        command = input()
+        if command == "help":
+            print(
+                "Possible commands are: \nblack: assemble phone with black cover \nwhite: assemble phone with white cover \n"
+                "blue: assemble phone with blue cover \nzero: put the robot in zero position \nquit: close the program")
+        elif command == "black":
+            self.colour_id = PartEnum.BLACKCOVER.value
+            self.main_flow(controller.colour_id)
+        elif command == "white":
+            self.colour_id = PartEnum.WHITECOVER.value
+            self.main_flow(controller.colour_id)
+        elif command == "blue":
+            self.colour_id = PartEnum.BLUECOVER.value
+            self.main_flow(controller.colour_id)
+        elif command == "zero":
+            self.move_robot.move_out_of_view()
+        elif command == "quit":
+            exit(0)
+        else:
+            print("Invalid command, please try again")
 
 
 controller = Controller()
 
 while True:
-    print("Please write a command (write 'help' for a list of commands):")
-    command = input()
-    if command == "help":
-        print("Possible commands are: \nblack: assemble phone with black cover \nwhite: assemble phone with white cover \n"
-            "blue: assemble phone with blue cover \nzero: put the robot in zero position \nquit: close the program")
-    elif command == "black":
-        controller.colour_id = PartEnum.BLACKCOVER.value
-        controller.main_flow(controller.colour_id)
-    elif command == "white":
-        controller.colour_id = PartEnum.WHITECOVER.value
-        controller.main_flow(controller.colour_id)
-    elif command == "blue":
-        controller.colour_id = PartEnum.BLUECOVER.value
-        controller.main_flow(controller.colour_id)
-    elif command == "zero":
-        controller.move_arm(0, 0)
-    elif command == "quit":
-        break
-    else:
-        print("Invalid command, please try again")
+    controller.choose_action()
