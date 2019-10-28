@@ -76,7 +76,11 @@ class Controller:
     def get_part_location(self, part_id):
         x, y, orientation = self.vision.detect_object(ClassConverter.convert_part_id(part_id))
         x, y, _ = self.aruco.calibrate(self.np_image, x, y)
-        return x, y, orientation
+        if x == -1 and y == -1:
+            print("[W]: COULD NOT FIND PART IN IMAGE")
+            exit(1)
+        else:
+            return x, y, orientation
 
 
 controller = Controller()
