@@ -53,12 +53,19 @@ class MoveRobot:
         self.home_pose = [35, -350, 300, 3.14, 0, 0]
         self.move_out_of_view_pose = [-350, -35, 300, 3.14, 0, 0]
         self.default_orientation = [3.14, 0, 0]
+        self.gripper_tcp = [0, 0, 0.1535, 2.9024, -1.2023, 0]
+        self.fuse_tcp = [0.05455, -0.00109, 0.13215, -1.7600, -0.7291, 1.7601]
+        self.suction_tcp = [0, 0.1418, -0.012, 0.7291, 1.7600, -1.7602]
+
+        self.move_gripper(0)
+        self.move_gripper(100)
 
     def __del__(self):
         msg = "bye()\n"
         msg = msg.encode()
         self.gripper.send(msg)
         print("sent disconnect to gripper")
+        self.gripper.close()
 
     def movel(self, pose, acc=1.0, vel=0.05, wait=True, relative=False):
         pose_local = pose[:]
@@ -74,7 +81,7 @@ class MoveRobot:
         self.movel(self.move_out_of_view_pose, acc=1.0, vel=speed)
 
     def open_gripper(self):
-        msg = "release(30)\n"
+        msg = "release(50)\n"
         msg = msg.encode()
         self.gripper.send(msg)
         time.sleep(1)
@@ -85,6 +92,12 @@ class MoveRobot:
         self.gripper.send(msg)
         time.sleep(3)
 
+    def move_gripper(self, position):
+        msg = "move({})\n".format(position)
+        msg = msg.encode()
+        self.gripper.send(msg)
+        time.sleep(2)
+
     def enable_suction(self):
         self.robot.set_digital_out(self.suction_enable_pin, True)
 
@@ -94,7 +107,12 @@ class MoveRobot:
     def grip(self, x, y, orientation, part_id):
         self.move_to_home()
         if part_id == 1 or part_id == 1: #PCB
-            pass
+            orientation_vector = [1.037, -2.503, 2.503]
+            self.robot.set_tcp(self.suction_tcp)
+            self.movel([x, y, 40] + orientation_vector, acc=1, vel=1)
+            self.enable_suction()
+            self.movel([x, y, 0] + orientation_vector, acc=0.1, vel=0.1)
+            self.movel([x, y, 40] + orientation_vector, acc=0.1, vel=0.1)
         elif part_id == 2: #fuse
             pass
         else: #covers
@@ -116,20 +134,18 @@ class MoveRobot:
         self.movel([x, y, 20] + self.default_orientation, acc=1, vel=1)
         self.movel([x, y, 0.5] + self.default_orientation, acc=0.1, vel=0.02)
         self.open_gripper()
+        self.disable_suction()
         self.movel([x, y, 20] + self.default_orientation, acc=0.1, vel=0.02)
 
 
 if __name__ == "__main__":
-    a = Utils.rpy_to_rot_vect(-180, 0, 45)
-
     robot = MoveRobot("192.168.1.148")
     time.sleep(1)
+    print("init done")
 
-    robot.close_gripper()
-    robot.open_gripper()
 
-    robot.grip(0, -400, 0, 0)
-    robot.place(0, -200, 0)
+    robot.grip(40, -400, 0, 1)
+    robot.place(0, -300, 1)
 
 
     time.sleep(3)
