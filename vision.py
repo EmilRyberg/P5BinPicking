@@ -29,7 +29,7 @@ class Vision:
         try:
             frames = None
             # Wait for a coherent pair of frames: depth and color
-            for i in range(30):
+            for i in range(90):
                 frames = rs.wait_for_frames()
 
             color_frame = frames.get_color_frame()

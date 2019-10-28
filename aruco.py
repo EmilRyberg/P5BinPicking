@@ -71,9 +71,9 @@ class Calibration:
             i += 1
             # print(i)
             # print(world_coordinates)
-            if world_coordinates[2] > 0.5:
+            if world_coordinates[2][0] > 0.5:
                 scaling_factor += 1
-            elif world_coordinates[2] < -0.5:
+            elif world_coordinates[2][0] < -0.5:
                 scaling_factor -= 1
             elif i > 1000:
                 raise Exception("scaling factor finding is taking loner than 100 iterations, should be under 50")

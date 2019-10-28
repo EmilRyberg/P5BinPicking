@@ -44,6 +44,7 @@ class MoveRobot:
                 time.sleep(0.2)
                 if counter > 10:
                     print("[FATAL] Couldn't connect to gripper, exiting.")
+                    self.gripper.close()
                     exit(1)
             else:
                 done = True
@@ -66,6 +67,7 @@ class MoveRobot:
         pose_local[0] *= 0.001
         pose_local[1] *= 0.001
         pose_local[2] *= 0.001
+        print(pose_local)
         self.robot.movel(pose_local, acc=acc, vel=vel, wait=wait, relative=relative)
 
     def move_to_home(self, speed=1.0):
