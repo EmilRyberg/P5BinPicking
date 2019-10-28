@@ -8,10 +8,6 @@ from PIL import Image as pimg
 import numpy as np
 
 NUMBER_OF_PARTS = 4
-BIG_GRIPPER = 0
-SUCTION = 1
-SMALL_GRIPPER = 2
-FINAL_COVER = 3
 FIXTURE_X = 255
 FIXTURE_Y = -320
 
@@ -23,6 +19,7 @@ class Controller:
         self.colour_id = None
         self.location = None
         self.orientation = None
+        self.np_image = None
         self.utils = Utils()
         self.move_robot = MoveRobot("192.168.1.148")
         self.vision = Vision()
@@ -34,58 +31,39 @@ class Controller:
         if not self.in_zero_position:
             self.move_robot.move_out_of_view() #Move to zero position
             self.in_zero_position = True
-            self.vision.capture_image()
+        self.vision.capture_image()
+        pil_image = pimg.open("/home/rob/Desktop/P5BinPicking/DarkNet/webcam_capture.png")
+        self.np_image = np.array(pil_image)
         """for i in range(NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
             self.part_id=i
             x, y, orientation = self.get_part_location(self.part_id)
             #print("[D]: Position: ", position, " orientation = ", orientation)
             self.move_arm(x, y, orientation, self.part_id)
-            #self.pick_up(self.part_id)
             self.place_part(self.part_id)"""
-        self.part_id = 0
+        #Following 8 lines are only used until the move robot can handle fuse and pcb
+        self.part_id = PartEnum.BACKCOVER.value
         x, y, orientation = self.get_part_location(self.part_id)
-        pil_image = pimg.open("/home/rob/Desktop/P5BinPicking/DarkNet/webcam_capture.png")
-        np_image = np.array(pil_image)
-        x, y, _ = self.aruco.calibrate(np_image, x, y)
         # print("[D]: Position: ", position, " orientation = ", orientation)
         self.move_arm(x, y, orientation, self.part_id)
         self.place_part(self.part_id)
         x, y, orientation = self.get_part_location(self.colour_id) #3: black, 4: white, 5: blue
-        x, y, _ = self.aruco.calibrate(np_image, x, y)
         self.move_arm(x, y, orientation, self.colour_id)
-        #self.pick_up(self.colour_id)
         self.place_part(self.colour_id)
 
-    """def pick_up(self, part_id):
-        if part_id == 0:
-            tool = "big gripper"
-            print("[I] big gripper to pick up ", self.utils.part_id_to_name(part_id))
-        elif part_id == 1:
-            tool = "suction"
-            print("[I] using suction to pick up ", self.utils.part_id_to_name(part_id))
-        elif part_id == 2:
-            tool = "small gripper"
-            print("[I] using small gripper to pick up ", self.utils.part_id_to_name(part_id))
-        elif 2 < part_id < 6:
-            tool = "big gripper"
-            print("[I] big gripper to pick up ", self.utils.part_id_to_name(part_id))
-        else:
-            print("[WARNING] wrong part. ID recieved: ", part_id)
-            return"""
-
     def place_part(self, part_id):
-        if part_id == 0:
+        if part_id == PartEnum.BACKCOVER.value:
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
-        elif part_id == 1:
+        elif part_id == PartEnum.PCB.value:
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
-        elif part_id == 2:
+        elif part_id == PartEnum.FUSE.value:
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
-        elif 2 < part_id < 6:
+        elif 2 < part_id < 6: #ANY colour front cover
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
         else:
             print("[WARNING] wrong part. ID recieved: ", part_id)
 
-        if part_id == 0:
+        #Following if-else statement is used for simple placing in a stack
+        if part_id == PartEnum.BACKCOVER.value:
             self.move_robot.place(FIXTURE_X, FIXTURE_Y, part_id)
         else:
             self.move_robot.place(FIXTURE_X, FIXTURE_Y, part_id, 30)
@@ -97,6 +75,7 @@ class Controller:
 
     def get_part_location(self, part_id):
         x, y, orientation = self.vision.detect_object(ClassConverter.convert_part_id(part_id))
+        x, y, _ = self.aruco.calibrate(self.np_image, x, y)
         return x, y, orientation
 
 
