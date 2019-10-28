@@ -6,6 +6,7 @@ import logging
 import socket
 from utils import Utils
 import math
+import numpy as np
 
 
 class MoveRobot:
@@ -43,6 +44,7 @@ class MoveRobot:
                 time.sleep(0.2)
                 if counter > 10:
                     print("[FATAL] Couldn't connect to gripper, exiting.")
+                    self.gripper.close()
                     exit(1)
             else:
                 done = True
@@ -68,10 +70,11 @@ class MoveRobot:
         self.gripper.close()
 
     def movel(self, pose, acc=1.0, vel=0.05, wait=True, relative=False):
-        pose_local = pose[:]
+        pose_local = pose.copy()
         pose_local[0] *= 0.001
         pose_local[1] *= 0.001
         pose_local[2] *= 0.001
+        print(pose_local)
         self.robot.movel(pose_local, acc=acc, vel=vel, wait=wait, relative=relative)
 
     def move_to_home(self, speed=1.0):
@@ -114,10 +117,10 @@ class MoveRobot:
             self.movel([x, y, 0] + orientation_vector, acc=0.1, vel=0.1)
             self.movel([x, y, 40] + orientation_vector, acc=0.1, vel=0.1)
         elif part_id == 2: #fuse
-            pass
+            exit(1)
         else: #covers
             orientation_vector = None
-            if orientation == 0: #horizontal
+            if orientation == 1: #horizontal
                 #orientation_vector = Utils.rpy_to_rot_vect(180, 0, 45)
                 orientation_vector = [2.9, -1.2, 0]
             else:
@@ -125,14 +128,14 @@ class MoveRobot:
                 orientation_vector = [1.2, -2.9, 0]
             self.movel([x, y, 20] + orientation_vector, acc=1, vel=1)
             self.open_gripper()
-            self.movel([x, y, 0.5] + orientation_vector, acc=0.1, vel=0.02)
+            self.movel([x, y, 0.5] + orientation_vector, acc=0.1, vel=0.1)
             self.close_gripper()
-            self.movel([x, y, 20] + orientation_vector, acc=0.1, vel=0.02)
+            self.movel([x, y, 20] + orientation_vector, acc=0.1, vel=0.1)
 
-    def place(self, x, y, type):
+    def place(self, x, y, type, z_offset=0):
         self.move_to_home()
         self.movel([x, y, 20] + self.default_orientation, acc=1, vel=1)
-        self.movel([x, y, 0.5] + self.default_orientation, acc=0.1, vel=0.02)
+        self.movel([x, y, 0.5 + z_offset] + self.default_orientation, acc=0.1, vel=0.02)
         self.open_gripper()
         self.disable_suction()
         self.movel([x, y, 20] + self.default_orientation, acc=0.1, vel=0.02)

@@ -1,65 +1,73 @@
 from darknetpy.detector import Detector
-import pyrealsense2 as rs
+import pyrealsense2 as realsense
 from PIL import Image as pimg
 import numpy as np
 
+HORIZONTAL = 0
+VERTICAL = 1
+
+YOLOCFGPATH = '/home/rob/Desktop/P5BinPicking/DarkNet/'
 
 class Vision:
     def __init__(self):
-        self.rs.pipeline()
-        self.cfg=rs.config()
-        self.detector=Detector('<path-to-.data>', '<path-to-.cfg','<path-to-.weights>')
+        self.detector = Detector(YOLOCFGPATH+'cfg/obj.data', YOLOCFGPATH+'cfg/yolov3-tiny.cfg',YOLOCFGPATH+'yolov3-tiny_final.weights')
+        self.counter = 0
 
     def capture_image(self):
         #basically the capture script benedek made
         #maybe a better way to get a way from the camera
-        self.cfg.enable_stream(rs.stream.color, 1920, 1080, rs.format,rgb8, 30)
+        rs = realsense.pipeline()
+        cfg = realsense.config()
+        cfg.enable_stream(realsense.stream.depth, 1280, 720, realsense.format.z16, 30)
+        cfg.enable_stream(realsense.stream.color, 1920, 1080, realsense.format.rgb8, 30)
+        cfg.enable_stream(realsense.stream.color, 1920, 1080, realsense.format.rgb8, 30)
+        profile = rs.start(cfg)
 
         try:
+            frames = None
             # Wait for a coherent pair of frames: depth and color
-            for i in range(30):
-                frames = pipeline.wait_for_frames()
+            for i in range(90):
+                frames = rs.wait_for_frames()
 
-            while True:
-                frames = pipeline.wait_for_frames()
+            color_frame = frames.get_color_frame()
 
-                color_frame = frames.get_color_frame()
+            # Convert images to numpy arrays
+            color_image = np.asanyarray(color_frame.get_data())
 
-                # Convert images to numpy arrays
-                color_image = np.asanyarray(color_frame.get_data())
+            color_image_ready_to_save = pimg.fromarray(color_image, 'RGB')
 
-                color_image_ready_to_save = pimg.fromarray(color_image, 'RGB')
-
-                color_image_ready_to_save.save('webcam_capture.png')
-
-                input('Capture and image')
+            color_image_ready_to_save.save(YOLOCFGPATH+'webcam_capture.png')
 
         finally:
 
             # Stop streaming
-            pipeline.stop()
+            rs.stop()
 
 
-    def detect_object(self, part_id):
-        results=self.detector.detect('webcam_capture.png')
-
+    def detect_object(self, class_id):
+        results = self.detector.detect(YOLOCFGPATH+'webcam_capture.png')
+        class_id1, class_id2 = class_id
+        part = (-1, -1, -1)
         #result is an array of dictionaries
-        counter=0
-        for x in range(len(results)):
-            d=results[counter]
-            if d['class'] == part_id:
-                classify=d['class']
-                prob=d['prob']
-                width=d['right']-d['left']
-                height=d['bottom']-d['top']
-                x_coord=width/2 + d['left']
-                y_coord=height/2 + d['top']
-                part=(classify, prob, width, height, x_coord, y_coord)
+        for i in range(len(results)):
+            d = results[i]
+            if (d['class'] == class_id1 or d['class'] == class_id2) and d['prob'] > 0.6:
+                classify = d['class']
+                prob = d['prob']
+                width = d['right']-d['left']
+                height = d['bottom']-d['top']
+                x_coord = width/2 + d['left']
+                y_coord = height/2 + d['top']
+                if height > width:
+                    orientation = HORIZONTAL
+                elif width > height:
+                    orientation = VERTICAL
+                else:
+                    orientation = HORIZONTAL
+                    print("[W] Could not determine orientation, using 1 as default")
+                part = (x_coord, y_coord, orientation)
                 break
-
-            counter += 1
-
-        
+        print(part)
         return part
 
 
