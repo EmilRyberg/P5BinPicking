@@ -10,11 +10,8 @@ YOLOCFGPATH = '/home/rob/Desktop/P5BinPicking/DarkNet/'
 
 class Vision:
     def __init__(self):
-        self.part = (-1, -1, -1)
-        self.detector=Detector(YOLOCFGPATH+'cfg/obj.data', YOLOCFGPATH+'cfg/yolov3-tiny.cfg',YOLOCFGPATH+'yolov3-tiny_final.weights')
+        self.detector = Detector(YOLOCFGPATH+'cfg/obj.data', YOLOCFGPATH+'cfg/yolov3-tiny.cfg',YOLOCFGPATH+'yolov3-tiny_final.weights')
         self.counter = 0
-        self.class_id1 = 0
-        self.class_id2 = 0
 
     def capture_image(self):
         #basically the capture script benedek made
@@ -48,18 +45,19 @@ class Vision:
 
 
     def detect_object(self, class_id):
-        results=self.detector.detect(YOLOCFGPATH+'webcam_capture.png')
-        self.class_id1, self.class_id2 = class_id
+        results = self.detector.detect(YOLOCFGPATH+'webcam_capture.png')
+        class_id1, class_id2 = class_id
+        part = (-1, -1, -1)
         #result is an array of dictionaries
         for i in range(len(results)):
             d = results[i]
-            if ((d['class'] == self.class_id1 or d['class'] == self.class_id2) and d['prob'] > 0.8):
-                classify=d['class']
-                prob=d['prob']
-                width=d['right']-d['left']
-                height=d['bottom']-d['top']
-                x_coord=width/2 + d['left']
-                y_coord=height/2 + d['top']
+            if (d['class'] == class_id1 or d['class'] == class_id2) and d['prob'] > 0.6:
+                classify = d['class']
+                prob = d['prob']
+                width = d['right']-d['left']
+                height = d['bottom']-d['top']
+                x_coord = width/2 + d['left']
+                y_coord = height/2 + d['top']
                 if height > width:
                     orientation = HORIZONTAL
                 elif width > height:
@@ -67,10 +65,10 @@ class Vision:
                 else:
                     orientation = HORIZONTAL
                     print("[W] Could not determine orientation, using 1 as default")
-                self.part=(x_coord, y_coord, orientation)
+                part = (x_coord, y_coord, orientation)
                 break
-        print(self.part)
-        return self.part
+        print(part)
+        return part
 
 
             
