@@ -89,6 +89,16 @@ class Controller:
         else:
             return x, y, orientation
 
+    def flip_parts(self):
+        parts_to_flip = self.vision.find_flipped_parts()
+        for i in range(len(parts_to_flip)):
+            part = parts_to_flip[i]
+            gripper = part[0]
+            x = part[1]
+            y = part[2]
+            orientation = part[3]
+            print("[D]: Trying to flip object similar to: ", self.utils.part_id_to_name(gripper), " with coordinates, X: ", x, " and y: ", y)
+
     def choose_action(self):
         print("Please write a command (write 'help' for a list of commands):")
         command = input()
