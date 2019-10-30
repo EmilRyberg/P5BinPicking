@@ -28,24 +28,27 @@ class Controller:
         print("[I] Controller running")
 
     def main_flow(self, colour_id):
-        if not self.in_zero_position:
-            self.move_robot.move_out_of_view() #Move to zero position
-            self.in_zero_position = True
         self.get_image()
         self.flip_parts()
         z_offset = 0
         for i in range(NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
             self.part_id=i
             x, y, orientation = self.get_part_location(self.part_id)
-            if x is None:
-                return
+            while x is None:
+                print("[W]: Could not find required part in image, please move the part and try again. Part: ",self.utils.part_id_to_name(self.part_id))
+                input("Press Enter to continue...")
+                self.get_image()
+                x, y, orientation = self.get_part_location(self.part_id)
             #print("[D]: Position: ", position, " orientation = ", orientation)
             self.move_arm(x, y, orientation, self.part_id)
             self.place_part(self.part_id, z_offset)
-            z_offset += 20
+            z_offset += 25
         x, y, orientation = self.get_part_location(self.colour_id) #3: black, 4: white, 5: blue
-        if x is None:
-            return
+        while x is None:
+            print("[W]: Could not find required part in image, please move the part and try again. Part: ",self.utils.part_id_to_name(self.part_id))
+            input("Press Enter to continue...")
+            self.get_image()
+            x, y, orientation = self.get_part_location(self.part_id)
         self.move_arm(x, y, orientation, self.colour_id)
         self.place_part(self.colour_id)
 
@@ -73,7 +76,6 @@ class Controller:
         class_names = ClassConverter.convert_part_id(part_id)
         x, y, orientation = self.vision.detect_object(class_names)
         if x == -1 and y == -1:
-            print("[W]: Could not find required part in image, please try again. Part: ", self.utils.part_id_to_name(part_id))
             return None, None, None
         x, y, _ = self.aruco.calibrate(self.np_image, x, y)
         if part_id == PartEnum.FUSE.value:
@@ -96,6 +98,7 @@ class Controller:
             return False
 
     def get_image(self):
+        self.move_robot.move_out_of_view()
         self.vision.capture_image()
         pil_image = pimg.open("/home/rob/Desktop/P5BinPicking/DarkNet/webcam_capture.png")
         self.np_image = np.array(pil_image)
