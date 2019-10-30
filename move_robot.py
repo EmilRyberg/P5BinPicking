@@ -46,7 +46,7 @@ class MoveRobot:
 
         self.suction_enable_pin = 6
         self.home_pose = [35, -300, 300, 0, 0, -0.8]
-        self.move_out_of_view_pose = [-350, -35, 300, 3.14, 0, 0]
+        self.move_out_of_view_pose = [-350, -35, 300, 0, 0, 0]
         self.default_orientation = [0, 0, 0]
         self.gripper_tcp = [0, 0, 0.1535, 2.9024, -1.2023, 0]
         self.fuse_tcp = [0.05455, -0.00109, 0.13215, -1.7600, -0.7291, 1.7601]
@@ -75,7 +75,7 @@ class MoveRobot:
         pose_local[0] *= 0.001
         pose_local[1] *= 0.001
         pose_local[2] *= 0.001
-        #print(pose_local)
+        print(pose_local)
         self.robot.movel(pose_local, acc=acc, vel=vel, wait=wait, relative=relative)
 
     def move_to_home(self, orientation_offset=0.0, speed=1.0):
@@ -84,10 +84,12 @@ class MoveRobot:
         self.movel(home_pose_local, acc=1.0, vel=speed)
 
     def move_out_of_view(self, speed=1.0):
+        self.move_to_home()
+        self.robot.set_tcp(self.gripper_tcp)
         self.movel(self.move_out_of_view_pose, acc=1.0, vel=speed)
 
     def open_gripper(self):
-        msg = "release(50)\n"
+        msg = "release(100)\n"
         msg = msg.encode()
         self.gripper.send(msg)
         time.sleep(1)
@@ -143,11 +145,11 @@ class MoveRobot:
 
         else: #covers
             if orientation == 0:
-                angle = 0
+                angle = 90
                 angle = math.radians(angle)
                 orientation_vector = [0, 0, angle]
             else:
-                angle = 90
+                angle = 0
                 angle = math.radians(angle)
                 orientation_vector = [0, 0, angle]
             self.robot.set_tcp(self.gripper_tcp)

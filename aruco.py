@@ -27,6 +27,7 @@ class Calibration:
         self.distortion = default_distortion.T
 
     def calibrate(self, np_image, x_coordinate, y_coordinate):
+        assert(x_coordinate > 0 and y_coordinate > 0, "[FATAL] aruco calibrate got invalid x or y")
         timer = time.time()
 
         # RGB to BGR, then grayscale
@@ -67,7 +68,7 @@ class Calibration:
             xyz_c = intrinsic_matrix_inverse.dot(pixel_coordinates)
             xyz_c = xyz_c - t_vector
             world_coordinates = r_matrix_inverse.dot(xyz_c)
-            print(scaling_factor)
+            #print(scaling_factor)
             i += 1
             # print(i)
             # print(world_coordinates)

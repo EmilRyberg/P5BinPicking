@@ -21,43 +21,35 @@ class Controller:
         self.orientation = None
         self.np_image = None
         self.utils = Utils()
-        #self.move_robot = MoveRobot("192.168.1.148")
+        self.move_robot = MoveRobot("192.168.1.148")
         self.vision = Vision()
         self.aruco = Calibration()
 
         print("[I] Controller running")
 
-        #If Y is smaller -450
-
     def main_flow(self, colour_id):
         if not self.in_zero_position:
-            #self.move_robot.move_out_of_view() #Move to zero position
+            self.move_robot.move_out_of_view() #Move to zero position
             self.in_zero_position = True
         self.get_image()
         self.flip_parts()
-        """for i in range(NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
+        z_offset = 0
+        for i in range(NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
             self.part_id=i
             x, y, orientation = self.get_part_location(self.part_id)
             if x is None:
                 return
             #print("[D]: Position: ", position, " orientation = ", orientation)
             self.move_arm(x, y, orientation, self.part_id)
-            self.place_part(self.part_id)"""
-        #Following 8 lines are only used until the move robot can handle fuse and pcb
-        #self.part_id = PartEnum.BACKCOVER.value
-        #x, y, orientation = self.get_part_location(self.part_id)
-        #if x is None:
-        #    return
-        # print("[D]: Position: ", position, " orientation = ", orientation)
-        #self.move_arm(x, y, orientation, self.part_id)
-        #self.place_part(self.part_id)
-        #x, y, orientation = self.get_part_location(self.colour_id) #3: black, 4: white, 5: blue
-        #if x is None:
-        #    return
-        #self.move_arm(x, y, orientation, self.colour_id)
-        #self.place_part(self.colour_id)
+            self.place_part(self.part_id, z_offset)
+            z_offset += 20
+        x, y, orientation = self.get_part_location(self.colour_id) #3: black, 4: white, 5: blue
+        if x is None:
+            return
+        self.move_arm(x, y, orientation, self.colour_id)
+        self.place_part(self.colour_id)
 
-    def place_part(self, part_id):
+    def place_part(self, part_id, z_offset):
         if part_id == PartEnum.BACKCOVER.value:
             print("[I] Placing: ", self.utils.part_id_to_name(part_id))
         elif part_id == PartEnum.PCB.value:
@@ -70,10 +62,7 @@ class Controller:
             print("[WARNING] wrong part. ID recieved: ", part_id)
 
         #Following if-else statement is used for simple placing in a stack
-        if part_id == PartEnum.BACKCOVER.value:
-            self.move_robot.place(FIXTURE_X, FIXTURE_Y, part_id)
-        else:
-            self.move_robot.place(FIXTURE_X, FIXTURE_Y, part_id, 30)
+        self.move_robot.place(FIXTURE_X, FIXTURE_Y, z_offset)
 
     def move_arm(self, x, y, orientation, part_id):
         print("[I] Moving arm")
@@ -83,11 +72,11 @@ class Controller:
     def get_part_location(self, part_id):
         class_names = ClassConverter.convert_part_id(part_id)
         x, y, orientation = self.vision.detect_object(class_names)
-        x, y, _ = self.aruco.calibrate(self.np_image, x, y)
         if x == -1 and y == -1:
             print("[W]: Could not find required part in image, please try again. Part: ", self.utils.part_id_to_name(part_id))
             return None, None, None
-        elif part_id == PartEnum.FUSE.value:
+        x, y, _ = self.aruco.calibrate(self.np_image, x, y)
+        if part_id == PartEnum.FUSE.value:
             fuse_in_restricted_area = self.fuse_area_check(y)
             while fuse_in_restricted_area:
                 print("[W]: Fuse found in restricted area, y =", y, " please move the fuse closer to the robot")
