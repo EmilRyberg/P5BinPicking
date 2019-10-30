@@ -2,6 +2,8 @@ from darknetpy.detector import Detector
 import pyrealsense2 as realsense
 from PIL import Image as pimg
 import numpy as np
+from part_enum import PartEnum
+
 
 HORIZONTAL = 0
 VERTICAL = 1
@@ -69,6 +71,48 @@ class Vision:
                 break
         print(part)
         return part
+
+    def find_flipped_parts(self):
+        results = self.detector.detect(YOLOCFGPATH+'webcam_capture.png')
+        parts_to_flip = []
+        for i in range(len(results)):
+            d = results[i]
+            if d['class'] == 'BottomCoverFlipped' or d['class'] == 'BlueCover' or d['class'] == 'WhiteCover' or d['class'] == 'BlackCover' and d['prob'] > 0.6:
+                classify = d['class']
+                prob = d['prob']
+                width = d['right'] - d['left']
+                height = d['bottom'] - d['top']
+                x_coord = width / 2 + d['left']
+                y_coord = height / 2 + d['top']
+                gripper = PartEnum.BACKCOVER.value
+                if height > width:
+                    orientation = HORIZONTAL
+                elif width > height:
+                    orientation = VERTICAL
+                else:
+                    orientation = HORIZONTAL
+                    print("[W] Could not determine orientation, using 1 as default")
+                part = [gripper, x_coord, y_coord, orientation]
+                parts_to_flip.append(part)
+            elif d['class'] == 'PCBFlipped' and d['prob'] > 0.6:
+                classify = d['class']
+                prob = d['prob']
+                width = d['right'] - d['left']
+                height = d['bottom'] - d['top']
+                x_coord = width / 2 + d['left']
+                y_coord = height / 2 + d['top']
+                gripper = PartEnum.PCB.value
+                if height > width:
+                    orientation = HORIZONTAL
+                elif width > height:
+                    orientation = VERTICAL
+                else:
+                    orientation = HORIZONTAL
+                print("[W] Could not determine orientation, using 1 as default")
+                part = [gripper, x_coord, y_coord, orientation]
+                parts_to_flip.append(part)
+        print(parts_to_flip)
+        return parts_to_flip
 
 
             

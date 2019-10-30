@@ -21,19 +21,20 @@ class Controller:
         self.orientation = None
         self.np_image = None
         self.utils = Utils()
-        self.move_robot = MoveRobot("192.168.1.148")
+        #self.move_robot = MoveRobot("192.168.1.148")
         self.vision = Vision()
         self.aruco = Calibration()
 
         print("[I] Controller running")
 
+        #If Y is smaller -450
+
     def main_flow(self, colour_id):
         if not self.in_zero_position:
-            self.move_robot.move_out_of_view() #Move to zero position
+            #self.move_robot.move_out_of_view() #Move to zero position
             self.in_zero_position = True
-        self.vision.capture_image()
-        pil_image = pimg.open("/home/rob/Desktop/P5BinPicking/DarkNet/webcam_capture.png")
-        self.np_image = np.array(pil_image)
+        self.get_image()
+        self.flip_parts()
         """for i in range(NUMBER_OF_PARTS-1): #leaving front cover out for later choice of colour
             self.part_id=i
             x, y, orientation = self.get_part_location(self.part_id)
@@ -43,18 +44,18 @@ class Controller:
             self.move_arm(x, y, orientation, self.part_id)
             self.place_part(self.part_id)"""
         #Following 8 lines are only used until the move robot can handle fuse and pcb
-        self.part_id = PartEnum.BACKCOVER.value
-        x, y, orientation = self.get_part_location(self.part_id)
-        if x is None:
-            return
+        #self.part_id = PartEnum.BACKCOVER.value
+        #x, y, orientation = self.get_part_location(self.part_id)
+        #if x is None:
+        #    return
         # print("[D]: Position: ", position, " orientation = ", orientation)
-        self.move_arm(x, y, orientation, self.part_id)
-        self.place_part(self.part_id)
-        x, y, orientation = self.get_part_location(self.colour_id) #3: black, 4: white, 5: blue
-        if x is None:
-            return
-        self.move_arm(x, y, orientation, self.colour_id)
-        self.place_part(self.colour_id)
+        #self.move_arm(x, y, orientation, self.part_id)
+        #self.place_part(self.part_id)
+        #x, y, orientation = self.get_part_location(self.colour_id) #3: black, 4: white, 5: blue
+        #if x is None:
+        #    return
+        #self.move_arm(x, y, orientation, self.colour_id)
+        #self.place_part(self.colour_id)
 
     def place_part(self, part_id):
         if part_id == PartEnum.BACKCOVER.value:
@@ -86,8 +87,39 @@ class Controller:
         if x == -1 and y == -1:
             print("[W]: Could not find required part in image, please try again. Part: ", self.utils.part_id_to_name(part_id))
             return None, None, None
+        elif part_id == PartEnum.FUSE.value:
+            fuse_in_restricted_area = self.fuse_area_check(y)
+            while fuse_in_restricted_area:
+                print("[W]: Fuse found in restricted area, y =", y, " please move the fuse closer to the robot")
+                input("Press Enter to continue...")
+                self.get_image()
+                x, y, orientation = self.vision.detect_object(class_names)
+                x, y, _ = self.aruco.calibrate(self.np_image, x, y)
+                fuse_in_restricted_area = self.fuse_area_check(y)
+            return x, y, orientation
         else:
             return x, y, orientation
+
+    def fuse_area_check(self, fuse_y):
+        if fuse_y < -500:
+            return True
+        else:
+            return False
+
+    def get_image(self):
+        self.vision.capture_image()
+        pil_image = pimg.open("/home/rob/Desktop/P5BinPicking/DarkNet/webcam_capture.png")
+        self.np_image = np.array(pil_image)
+
+    def flip_parts(self):
+        parts_to_flip = self.vision.find_flipped_parts()
+        for i in range(len(parts_to_flip)):
+            part = parts_to_flip[i]
+            gripper = part[0]
+            x = part[1]
+            y = part[2]
+            orientation = part[3]
+            print("[D]: Trying to flip object similar to: ", self.utils.part_id_to_name(gripper), " with coordinates, X: ", x, " and y: ", y)
 
     def choose_action(self):
         print("Please write a command (write 'help' for a list of commands):")
