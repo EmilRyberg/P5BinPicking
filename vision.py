@@ -1,7 +1,10 @@
 from darknetpy.detector import Detector
 import pyrealsense2 as realsense
 from PIL import Image as pimg
+from PIL import ImageDraw, ImageEnhance, ImageColor
 import numpy as np
+from part_enum import PartEnum
+
 
 HORIZONTAL = 0
 VERTICAL = 1
@@ -46,6 +49,7 @@ class Vision:
 
     def detect_object(self, class_id):
         results = self.detector.detect(YOLOCFGPATH+'webcam_capture.png')
+        self.draw_boxes(results)
         class_id1, class_id2 = class_id
         part = (-1, -1, -1)
         #result is an array of dictionaries
@@ -69,6 +73,64 @@ class Vision:
                 break
         print(part)
         return part
+
+    def draw_boxes(self, results):
+        source_img = pimg.open(YOLOCFGPATH+'webcam_capture.png').convert("RGBA")
+        for i in range(len(results)):
+            d = results[i]
+            if d['prob'] > 0.6:
+                classify = d['class']
+                prob = d['prob']
+                width = d['right']-d['left']
+                height = d['bottom']-d['top']
+                x_coord = width/2 + d['left']
+                y_coord = height/2 + d['top']
+                draw = ImageDraw.Draw(source_img)
+                draw.rectangle(((d['left'], d['top']), (d['right'], d['bottom'])), fill=None, outline=(200, 0, 150), width=6)
+                draw.text((x_coord, y_coord), d['class'])
+        source_img.save('boundingboxes.png')
+
+    def find_flipped_parts(self):
+        results = self.detector.detect(YOLOCFGPATH+'webcam_capture.png')
+        parts_to_flip = []
+        for i in range(len(results)):
+            d = results[i]
+            if d['class'] == 'BottomCoverFlipped' or d['class'] == 'BlueCover' or d['class'] == 'WhiteCover' or d['class'] == 'BlackCover' and d['prob'] > 0.6:
+                classify = d['class']
+                prob = d['prob']
+                width = d['right'] - d['left']
+                height = d['bottom'] - d['top']
+                x_coord = width / 2 + d['left']
+                y_coord = height / 2 + d['top']
+                gripper = PartEnum.BACKCOVER.value
+                if height > width:
+                    orientation = HORIZONTAL
+                elif width > height:
+                    orientation = VERTICAL
+                else:
+                    orientation = HORIZONTAL
+                    print("[W] Could not determine orientation, using 1 as default")
+                part = [gripper, x_coord, y_coord, orientation]
+                parts_to_flip.append(part)
+            elif d['class'] == 'PCBFlipped' and d['prob'] > 0.6:
+                classify = d['class']
+                prob = d['prob']
+                width = d['right'] - d['left']
+                height = d['bottom'] - d['top']
+                x_coord = width / 2 + d['left']
+                y_coord = height / 2 + d['top']
+                gripper = PartEnum.PCB.value
+                if height > width:
+                    orientation = HORIZONTAL
+                elif width > height:
+                    orientation = VERTICAL
+                else:
+                    orientation = HORIZONTAL
+                print("[W] Could not determine orientation, using 1 as default")
+                part = [gripper, x_coord, y_coord, orientation]
+                parts_to_flip.append(part)
+        print(parts_to_flip)
+        return parts_to_flip
 
 
             

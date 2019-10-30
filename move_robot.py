@@ -78,7 +78,7 @@ class MoveRobot:
         pose_local[0] *= 0.001
         pose_local[1] *= 0.001
         pose_local[2] *= 0.001
-        #print(pose_local)
+        print(pose_local)
         self.robot.movel(pose_local, acc=acc, vel=vel, wait=wait, relative=relative)
 
     def movej(self, pose, acc=1.0, vel=0.1, wait=True, relative=False):
@@ -160,11 +160,11 @@ class MoveRobot:
             print("gripping cover")
             self.move_to_home()
             if orientation == 0:
-                angle = 0
+                angle = 90
                 angle = math.radians(angle)
                 orientation_vector = [0, 0, angle]
             else:
-                angle = 90
+                angle = 0
                 angle = math.radians(angle)
                 orientation_vector = [0, 0, angle]
             self.robot.set_tcp(self.gripper_tcp)
