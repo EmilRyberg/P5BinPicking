@@ -6,6 +6,18 @@ import urx
 
 class MoveRobot:
     def __init__(self, ip):
+        self.suction_enable_pin = 6
+        self.home_pose_l = [35, -300, 300, 0, 0, -0.8]
+        self.home_pose = [-60, -60, -110, -100, 90, -60]
+        #self.move_out_of_view_pose = [-350, -35, 300, 3.14, 0, 0]
+        self.move_out_of_view_pose = [-150, -60, -110, -100, 90, -60]
+        self.default_orientation = [0, 0, 0]
+        self.gripper_tcp = [0, 0, 0.1535, 2.9024, -1.2023, 0]
+        self.fuse_tcp = [0.057, -0.00109, 0.13215, -1.7600, -0.7291, 1.7601]
+        self.suction_tcp = [-0.12, 0, 0.095, 0, 1.5707, 0]
+        self.current_part_id = None
+        self.grip_has_been_called_flag = False
+
         done = False
         counter = 0
         gripper_ip = "192.168.1.118"
@@ -44,18 +56,7 @@ class MoveRobot:
             else:
                 done = True
 
-        self.suction_enable_pin = 6
-        self.home_pose_l = [35, -300, 300, 0, 0, -0.8]
-        self.home_pose = [-60, -60, -110, -100, 90, -60]
-        #self.move_out_of_view_pose = [-350, -35, 300, 3.14, 0, 0]
-        self.move_out_of_view_pose = [-150, -60, -110, -100, 90, -60]
-        self.default_orientation = [0, 0, 0]
-        self.gripper_tcp = [0, 0, 0.1535, 2.9024, -1.2023, 0]
-        self.fuse_tcp = [0.05455, -0.00109, 0.13215, -1.7600, -0.7291, 1.7601]
-        self.suction_tcp = [-0.12, 0, 0.095, 0, 1.5707, 0]
-        self.current_part_id = None
-        self.grip_has_been_called_flag = False
-
+        self.disable_suction()
         self.move_gripper(0)
         self.move_gripper(100)
 
@@ -103,7 +104,7 @@ class MoveRobot:
         msg = msg.encode()
         self.gripper.send(msg)
         time.sleep(1)
-        self.move_gripper(110)
+        self.move_gripper(100)
 
     def close_gripper(self):
         msg = "grip(20,0)\n"
@@ -144,15 +145,15 @@ class MoveRobot:
             self.robot.set_tcp(self.fuse_tcp)
             self.move_to_home_l()
             if orientation == 0: # part horizontal
-                angle = -90 #DONE
-                angle = math.radians(angle)
-                orientation_vector = [0, 0, angle]
-            else: # part vertical
                 angle = 180 #DONE
                 angle = math.radians(angle)
                 orientation_vector = [0, 0, angle]
+            else: # part vertical
+                angle = -90 #DONE
+                angle = math.radians(angle)
+                orientation_vector = [0, 0, angle]
             self.movel([x, y, 20] + orientation_vector, acc=1, vel=1)
-            self.movel([x, y, 2] + orientation_vector, acc=0.1, vel=0.2)
+            self.movel([x, y, 0.5] + orientation_vector, acc=0.1, vel=0.2)
             self.close_gripper()
             self.movel([x, y, 20] + orientation_vector, acc=0.1, vel=0.2)
 
@@ -177,13 +178,13 @@ class MoveRobot:
 
     def place(self, x, y, z_offset=0):
         if self.grip_has_been_called_flag:
-            self.move_to_home()
+            self.move_to_home_l()
             if self.current_part_id == 1: # PCB
                 orientation_vector = [0, 0, -1.57]
                 self.movel([x, y, 20 + z_offset] + orientation_vector, acc=1, vel=1)
                 self.movel([x, y, 0.5 + z_offset] + orientation_vector, acc=0.1, vel=0.4)
                 self.disable_suction()
-                self.movel([x, y, 20] + orientation_vector, acc=0.1, vel=0.4)
+                self.movel([x, y, 20 +z_offset] + orientation_vector, acc=0.1, vel=0.4)
             elif self.current_part_id == 2: # fuse
                 angle = -90 #DONE
                 angle = math.radians(angle)
@@ -191,7 +192,7 @@ class MoveRobot:
                 self.movel([x, y, 20 + z_offset] + orientation_vector, acc=1, vel=1)
                 self.movel([x, y, 0.5 + z_offset] + orientation_vector, acc=0.1, vel=0.4)
                 self.open_gripper()
-                self.movel([x, y, 20] + orientation_vector, acc=0.1, vel=0.4)
+                self.movel([x, y, 20 + z_offset] + orientation_vector, acc=0.1, vel=0.4)
             else: # covers
                 angle = 0  # DONE
                 angle = math.radians(angle)
@@ -199,7 +200,7 @@ class MoveRobot:
                 self.movel([x, y, 20 + z_offset] + orientation_vector, acc=1, vel=1)
                 self.movel([x, y, 0.5 + z_offset] + orientation_vector, acc=0.1, vel=0.4)
                 self.open_gripper()
-                self.movel([x, y, 20] + orientation_vector, acc=0.1, vel=0.4)
+                self.movel([x, y, 20 + z_offset] + orientation_vector, acc=0.1, vel=0.4)
         else:
             print("[FATAL] place() was called before grip has been called! Exiting")
             self.stop_all()

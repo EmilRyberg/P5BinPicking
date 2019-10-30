@@ -50,7 +50,7 @@ class Controller:
             self.get_image()
             x, y, orientation = self.get_part_location(self.part_id)
         self.move_arm(x, y, orientation, self.colour_id)
-        self.place_part(self.colour_id)
+        self.place_part(self.colour_id, z_offset)
 
     def place_part(self, part_id, z_offset):
         if part_id == PartEnum.BACKCOVER.value:
