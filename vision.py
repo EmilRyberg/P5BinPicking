@@ -2,6 +2,7 @@ from darknetpy.detector import Detector
 import pyrealsense2 as rs
 from PIL import Image as pimg
 import numpy as np
+import cv2
 
 
 class Vision:
@@ -9,7 +10,8 @@ class Vision:
         self.rs.pipeline()
         self.cfg=rs.config()
         self.detector=Detector('<path-to-.data>', '<path-to-.cfg','<path-to-.weights>')
-
+        self.cap=cv2.VideoCapture(0)
+"""
     def capture_image(self):
         #basically the capture script benedek made
         #maybe a better way to get a way from the camera
@@ -38,9 +40,12 @@ class Vision:
 
             # Stop streaming
             pipeline.stop()
-
+"""
 
     def detect_object(self, part_id):
+        ret, frame = self.cap.read()
+        cv2.imwrite('webcam_capture.png', frame)
+
         results=self.detector.detect('webcam_capture.png')
 
         #result is an array of dictionaries
