@@ -47,28 +47,35 @@ class MoveRobot:
         self.suction_enable_pin = 6
         self.home_pose = [35, -300, 300, 0, 0, -0.8]
         self.move_out_of_view_pose = [-350, -35, 300, 3.14, 0, 0]
-        self.default_orientation = [3.14, 0, 0]
+        self.default_orientation = [0, 0, 0]
         self.gripper_tcp = [0, 0, 0.1535, 2.9024, -1.2023, 0]
         self.fuse_tcp = [0.05455, -0.00109, 0.13215, -1.7600, -0.7291, 1.7601]
         self.suction_tcp = [-0.12, 0, 0.095, 0, 1.5707, 0]
+        self.current_part_id = None
+        self.grip_has_been_called_flag = False
 
         self.move_gripper(0)
         self.move_gripper(100)
 
     def __del__(self):
+        self.stop_all()
+
+    def stop_all(self):
+        self.robot.stop()
         msg = "bye()\n"
         msg = msg.encode()
         self.gripper.send(msg)
-        print("sent disconnect to gripper")
         self.gripper.close()
         self.disable_suction()
+        self.robot.close()
+        print("[INFO] Safely stopped robot and gripper")
 
     def movel(self, pose, acc=1.0, vel=0.05, wait=True, relative=False):
         pose_local = pose.copy()
         pose_local[0] *= 0.001
         pose_local[1] *= 0.001
         pose_local[2] *= 0.001
-        print(pose_local)
+        #print(pose_local)
         self.robot.movel(pose_local, acc=acc, vel=vel, wait=wait, relative=relative)
 
     def move_to_home(self, orientation_offset=0.0, speed=1.0):
@@ -89,13 +96,13 @@ class MoveRobot:
         msg = "grip(20,0)\n"
         msg = msg.encode()
         self.gripper.send(msg)
-        #time.sleep(3)
+        time.sleep(3)
 
     def move_gripper(self, position):
         msg = "move({})\n".format(position)
         msg = msg.encode()
         self.gripper.send(msg)
-        #time.sleep(1)
+        time.sleep(1)
 
     def enable_suction(self):
         self.robot.set_digital_out(self.suction_enable_pin, True)
@@ -105,6 +112,8 @@ class MoveRobot:
 
     def grip(self, x, y, orientation, part_id): # 0 = part horizontal, 1 = part vertical
         self.move_to_home()
+        self.current_part_id = part_id
+        self.grip_has_been_called_flag = True
         if part_id == 1: #PCB
             orientation_vector = [0, 0, -1.57]
             self.robot.set_tcp(self.suction_tcp)
@@ -113,49 +122,26 @@ class MoveRobot:
             self.enable_suction()
             self.movel([x, y, 0] + orientation_vector, acc=0.1, vel=0.2)
             self.movel([x, y, 40] + orientation_vector, acc=0.1, vel=0.2)
+
         elif part_id == 2: #fuse
-            orientation_vector = None
-            special_move_required_flag = False
             self.robot.set_tcp(self.fuse_tcp)
             self.move_to_home()
-            if orientation == 0:
-                if y > -400 or True:
-                    angle = -90 #DONE
-                    angle = math.radians(angle)
-                    angle -= 0
-                elif False:
-                    self.robot.movej([0, 0, 0, 0, math.radians(-135), 0], relative=True, vel=3, acc=3)
-                    angle = -270 #DONE
-                    angle = math.radians(angle)
-                    angle -= 0
+            if orientation == 0: # part horizontal
+                angle = -90 #DONE
+                angle = math.radians(angle)
+                angle -= 0
                 orientation_vector = [0, 0, angle]
-            else:
-                if y < -400 and (x < 150 or x > -80) and False:
-                    special_move_required_flag = True
-                    self.robot.movej([0, 0, 0, 0, math.radians(-90), 0], relative=True, vel=3, acc=3)
-                    angle = 0 # DONE
-                    angle = math.radians(angle)
-                    angle -= 0
-                else:
-                    angle = 180 #DONE
-                    angle = math.radians(angle)
-                    angle -= 0
+            else: # part vertical
+                angle = 180 #DONE
+                angle = math.radians(angle)
+                angle -= 0
                 orientation_vector = [0, 0, angle]
-
             self.movel([x, y, 20] + orientation_vector, acc=1, vel=1)
             self.close_gripper()
             self.movel([x, y, 2] + orientation_vector, acc=0.1, vel=0.2)
             self.movel([x, y, 20] + orientation_vector, acc=0.1, vel=0.2)
-            if orientation == 0 and y <= -400 and False:
-                self.move_to_home(orientation_offset=math.radians(135))
-                self.robot.movej([0, 0, 0, 0, math.radians(180), 0], relative=True, vel=3, acc=3)
-                self.move_to_home()
-            if orientation == 1 and special_move_required_flag:
-                self.move_to_home(orientation_offset=math.radians(90))
-                self.robot.movej([0, 0, 0, 0, math.radians(135), 0], relative=True, vel=3, acc=3)
-                self.move_to_home()
+
         else: #covers
-            orientation_vector = None
             if orientation == 0:
                 angle = 0
                 angle = math.radians(angle)
@@ -172,13 +158,23 @@ class MoveRobot:
             self.close_gripper()
             self.movel([x, y, 20] + orientation_vector, acc=0.1, vel=0.4)
 
-    def place(self, x, y, type, z_offset=0):
-        self.move_to_home()
-        self.movel([x, y, 20 + z_offset] + self.default_orientation, acc=1, vel=1)
-        self.movel([x, y, 0.5 + z_offset] + self.default_orientation, acc=0.1, vel=0.02)
-        self.open_gripper()
-        self.disable_suction()
-        self.movel([x, y, 20] + self.default_orientation, acc=0.1, vel=0.02)
+    def place(self, x, y, z_offset=0):
+        if self.grip_has_been_called_flag:
+            self.move_to_home()
+            self.movel([x, y, 20 + z_offset] + self.default_orientation, acc=1, vel=1)
+            self.movel([x, y, 0.5 + z_offset] + self.default_orientation, acc=0.1, vel=0.4)
+            if self.current_part_id == 1: # PCB
+                self.disable_suction()
+            elif self.current_part_id == 2: # fuse
+                self.open_gripper()
+            else: # covers
+                self.open_gripper()
+            self.movel([x, y, 20] + self.default_orientation, acc=0.1, vel=0.4)
+        else:
+            print("[FATAL] place() was called before grip has been called! Exiting")
+            self.stop_all()
+        self.grip_has_been_called_flag = False
+
 
 
 if __name__ == "__main__":
@@ -186,12 +182,11 @@ if __name__ == "__main__":
     time.sleep(1)
     print("init done")
 
-    #robot.grip(0, -450, 0, 2)
     robot.grip(0, -500, 0, 1)
+    robot.place(80, -300, 0)
     robot.move_to_home()
 
-    robot.__del__()
-    exit()
+    robot.stop_all()
 
 """
     test_positions = [[-300, -280, 10], [-160, -180, 0], [30, -580, 0], [300, -350, 0], [50, -560, 0], [0, -320, 0], [130, -130, 0]]
