@@ -27,6 +27,7 @@ class Calibration:
         self.distortion = default_distortion.T
 
     def calibrate(self, np_image, x_coordinate, y_coordinate):
+        assert(x_coordinate > 0 and y_coordinate > 0, "[FATAL] aruco calibrate got invalid x or y")
         timer = time.time()
 
         # RGB to BGR, then grayscale
@@ -59,7 +60,7 @@ class Calibration:
         intrinsic_matrix_inverse = np.linalg.inv(self.default_intrinsic_matrix)
 
         # finding correct scaling factor by adjusting it until the calculated Z is very close to 0, mathematically correct way didn't work ¯\_(ツ)_/¯
-        scaling_factor = 1185
+        scaling_factor = 940
         i = 0
         while True:
             pixel_coordinates = np.array([[x_coordinate, y_coordinate, 1]]).T
@@ -67,16 +68,16 @@ class Calibration:
             xyz_c = intrinsic_matrix_inverse.dot(pixel_coordinates)
             xyz_c = xyz_c - t_vector
             world_coordinates = r_matrix_inverse.dot(xyz_c)
-            print(scaling_factor)
+            #print(scaling_factor)
             i += 1
             # print(i)
             # print(world_coordinates)
-            if world_coordinates[2] > 0.5:
+            if i > 1000:
+                raise Exception("scaling factor finding is taking loner than 1000 iterations")
+            if world_coordinates[2][0] > 0.5:
                 scaling_factor += 1
-            elif world_coordinates[2] < -0.5:
+            elif world_coordinates[2][0] < -0.5:
                 scaling_factor -= 1
-            elif i > 1000:
-                raise Exception("scaling factor finding is taking loner than 100 iterations, should be under 50")
             else:
                 break
         print("[INFO] Calibration took %.2f seconds" % (time.time() - timer))
