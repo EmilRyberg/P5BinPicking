@@ -22,7 +22,7 @@ class Controller:
 
         print("[I] Controller running")
 
-    def main_flow(self, colour_id):
+    def main_flow(self, colour_part_id):
         self.get_image()
         self.flip_parts()
         z_offset = 0
@@ -38,14 +38,14 @@ class Controller:
             self.move_arm(x, y, orientation, part_id)
             self.place_part(part_id, z_offset)
             z_offset += 25
-        x, y, orientation = self.get_part_location(colour_id) #3: black, 4: white, 5: blue
+        x, y, orientation = self.get_part_location(colour_part_id) #3: black, 4: white, 5: blue
         while x is None:
-            print("[W]: Could not find required part in image, please move the part and try again. Part: ", part_id_to_name(colour_id))
+            print("[W]: Could not find required part in image, please move the part and try again. Part: ", part_id_to_name(colour_part_id))
             input("Press Enter to continue...")
             self.get_image()
-            x, y, orientation = self.get_part_location(colour_id)
-        self.move_arm(x, y, orientation, colour_id)
-        self.place_part(colour_id, z_offset)
+            x, y, orientation = self.get_part_location(colour_part_id)
+        self.move_arm(x, y, orientation, colour_part_id)
+        self.place_part(colour_part_id, z_offset)
 
     def place_part(self, part_id, z_offset):
         if part_id == PartEnum.BACKCOVER.value:
