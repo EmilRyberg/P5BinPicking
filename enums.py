@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class PartEnum(Enum):
     BACKCOVER = 0
     PCB = 1
@@ -7,3 +8,8 @@ class PartEnum(Enum):
     BLACKCOVER = 3
     WHITECOVER = 4
     BLUECOVER = 5
+
+
+class OrientationEnum(Enum):
+    HORIZONTAL = 0
+    VERTICAL = 1

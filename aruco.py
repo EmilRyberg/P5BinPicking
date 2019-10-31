@@ -5,8 +5,8 @@ import cv2.aruco as aruco
 import cv2
 import time
 
-# based on this guide: https://www.fdxlabs.com/calculate-x-y-z-real-world-coordinates-from-a-single-camera-using-opencv/
 
+# based on this guide: https://www.fdxlabs.com/calculate-x-y-z-real-world-coordinates-from-a-single-camera-using-opencv/
 class Calibration:
     def __init__(self):
         # marker locations in robot world frame
@@ -61,19 +61,16 @@ class Calibration:
 
         # finding correct scaling factor by adjusting it until the calculated Z is very close to 0, mathematically correct way didn't work ¯\_(ツ)_/¯
         scaling_factor = 940
-        i = 0
+        index = 0
         while True:
             pixel_coordinates = np.array([[x_coordinate, y_coordinate, 1]]).T
             pixel_coordinates = scaling_factor * pixel_coordinates
             xyz_c = intrinsic_matrix_inverse.dot(pixel_coordinates)
             xyz_c = xyz_c - t_vector
             world_coordinates = r_matrix_inverse.dot(xyz_c)
-            #print(scaling_factor)
-            i += 1
-            # print(i)
-            # print(world_coordinates)
-            if i > 1000:
-                raise Exception("scaling factor finding is taking loner than 1000 iterations")
+            index += 1
+            if index > 1000:
+                raise Exception("scaling factor finding is taking longer than 1000 iterations")
             if world_coordinates[2][0] > 0.5:
                 scaling_factor += 1
             elif world_coordinates[2][0] < -0.5:
@@ -82,50 +79,3 @@ class Calibration:
                 break
         print("[INFO] Calibration took %.2f seconds" % (time.time() - timer))
         return world_coordinates[0][0], world_coordinates[1][0], world_coordinates[2][0]
-
-
-"""
-marker0 = np.array([[236,1049],[236, 972],[311, 971],[311, 1049]], dtype=np.float32)
-marker3 = np.array([[1220, 1036],[1215, 958],[1292, 958],[1294, 1033]], dtype=np.float32)
-marker2 = np.array([[693, 98],[619, 100],[615, 27],[690, 25]], dtype=np.float32)
-marker1 = np.array([[1243, 17],[1245, 88],[1171, 90],[1169, 17]], dtype=np.float32)
-corners2 = [marker0, marker3, marker2, marker1]
-"""
-
-"""
-rt_matrix = np.column_stack((r_matrix, t_vector))
-projection_matrix = default_intrinsic_matrix.dot(rt_matrix)
-xyz = np.array([[1000,500,-400,1.0]], dtype=np.float32)
-xyz = xyz.T
-suv = projection_matrix.dot(xyz)
-scaling_factor = suv[2,0]
-print(scaling_factor)
-"""
-if __name__ == "__main__":
-    calibration = Calibration()
-
-    pil_image = pimg.open("img3.png")
-    np_image = np.array(pil_image)
-
-    print(calibration.calibrate(np_image, 1035, 294))
-
-    exit()
-    pipeline = rs.pipeline()
-    cfg = rs.config()
-    cfg.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
-    cfg.enable_stream(rs.stream.color, 1920, 1080, rs.format.rgb8, 30)
-    profile = pipeline.start(cfg)
-
-    try:
-        for i in range(30):
-            frames = pipeline.wait_for_frames()
-
-        frames = pipeline.wait_for_frames()
-        depth_frame = frames.get_depth_frame()
-        color_frame = frames.get_color_frame()
-
-        depth_image = np.asanyarray(depth_frame.get_data())
-        color_image = np.asanyarray(color_frame.get_data())
-
-    finally:
-        pipeline.stop()

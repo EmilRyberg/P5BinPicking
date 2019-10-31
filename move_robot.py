@@ -2,7 +2,10 @@ import socket
 import time
 import math
 import urx
+from enums import PartEnum, OrientationEnum
 
+GRIPPER_IP = "192.168.1.118"
+GRIPPER_PORT = 1000
 
 class MoveRobot:
     def __init__(self, ip):
@@ -20,8 +23,6 @@ class MoveRobot:
 
         done = False
         counter = 0
-        gripper_ip = "192.168.1.118"
-        gripper_port = 1000
         while not done:
             try:
                 self.robot = urx.Robot(ip)
@@ -43,7 +44,7 @@ class MoveRobot:
         while not done:
             try:
                 self.gripper = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.gripper.connect((gripper_ip, gripper_port))
+                self.gripper.connect((GRIPPER_IP, GRIPPER_PORT))
             except Exception as e:
                 counter += 1
                 print(e)
@@ -128,7 +129,7 @@ class MoveRobot:
         self.move_to_home()
         self.current_part_id = part_id
         self.grip_has_been_called_flag = True
-        if part_id == 1: #PCB
+        if part_id == PartEnum.PCB.value:
             print("gripping PCB")
             orientation_vector = [0, 0, -1.57]
             self.move_to_home()
@@ -138,13 +139,12 @@ class MoveRobot:
             self.enable_suction()
             self.movel([x, y, 0] + orientation_vector, acc=0.1, vel=0.2)
             self.movel([x, y, 40] + orientation_vector, acc=0.1, vel=0.2)
-
-        elif part_id == 2: #fuse
+        elif part_id == PartEnum.FUSE.value:
             print("gripping fuse")
             self.move_to_home()
             self.robot.set_tcp(self.fuse_tcp)
             self.move_to_home_l()
-            if orientation == 0: # part horizontal
+            if orientation == OrientationEnum.HORIZONTAL.value:
                 angle = 180 #DONE
                 angle = math.radians(angle)
                 orientation_vector = [0, 0, angle]
@@ -156,11 +156,10 @@ class MoveRobot:
             self.movel([x, y, 0.5] + orientation_vector, acc=0.1, vel=0.2)
             self.close_gripper()
             self.movel([x, y, 20] + orientation_vector, acc=0.1, vel=0.2)
-
         else: #covers
             print("gripping cover")
             self.move_to_home()
-            if orientation == 0:
+            if orientation == OrientationEnum.HORIZONTAL.value:
                 angle = 90
                 angle = math.radians(angle)
                 orientation_vector = [0, 0, angle]
@@ -179,13 +178,13 @@ class MoveRobot:
     def place(self, x, y, z_offset=0):
         if self.grip_has_been_called_flag:
             self.move_to_home_l()
-            if self.current_part_id == 1: # PCB
+            if self.current_part_id == PartEnum.PCB.value: # PCB
                 orientation_vector = [0, 0, -1.57]
                 self.movel([x, y, 20 + z_offset] + orientation_vector, acc=1, vel=1)
                 self.movel([x, y, 0.5 + z_offset] + orientation_vector, acc=0.1, vel=0.4)
                 self.disable_suction()
                 self.movel([x, y, 20 +z_offset] + orientation_vector, acc=0.1, vel=0.4)
-            elif self.current_part_id == 2: # fuse
+            elif self.current_part_id == PartEnum.PCB.value: # fuse
                 angle = -90 #DONE
                 angle = math.radians(angle)
                 orientation_vector = [0, 0, angle]
@@ -207,7 +206,6 @@ class MoveRobot:
         self.grip_has_been_called_flag = False
 
 
-
 if __name__ == "__main__":
     robot = MoveRobot("192.168.1.148")
     time.sleep(1)
@@ -215,7 +213,6 @@ if __name__ == "__main__":
 
     robot.grip(0, -400, 0, 2)
     robot.place(0, -300)
-
 
     robot.stop_all()
 
