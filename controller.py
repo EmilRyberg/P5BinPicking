@@ -16,7 +16,6 @@ UR_IP = "192.168.1.148"
 class Controller:
     def __init__(self):
         self.np_image = None
-        self.utils = Utils()
         self.move_robot = MoveRobot(UR_IP)
         self.vision = Vision()
         self.aruco = Calibration()
@@ -41,10 +40,10 @@ class Controller:
             z_offset += 25
         x, y, orientation = self.get_part_location(colour_id) #3: black, 4: white, 5: blue
         while x is None:
-            print("[W]: Could not find required part in image, please move the part and try again. Part: ", part_id_to_name(part_id))
+            print("[W]: Could not find required part in image, please move the part and try again. Part: ", part_id_to_name(colour_id))
             input("Press Enter to continue...")
             self.get_image()
-            x, y, orientation = self.get_part_location(part_id)
+            x, y, orientation = self.get_part_location(colour_id)
         self.move_arm(x, y, orientation, colour_id)
         self.place_part(colour_id, z_offset)
 
@@ -94,9 +93,7 @@ class Controller:
 
     def get_image(self):
         self.move_robot.move_out_of_view()
-        self.vision.capture_image()
-        pil_image = pimg.open(self.vision.get_image_path())
-        self.np_image = np.array(pil_image)
+        self.np_image = self.vision.capture_image()
 
     def flip_parts(self):
         parts_to_flip = self.vision.find_flipped_parts()
