@@ -1,19 +1,20 @@
 from darknetpy.detector import Detector
 import pyrealsense2 as realsense
 from PIL import Image as pimg
-from PIL import ImageDraw, ImageEnhance, ImageColor
+from PIL import ImageDraw
 import numpy as np
-from part_enum import PartEnum
+from enums import PartEnum, OrientationEnum
+import os
 
-
-HORIZONTAL = 0
-VERTICAL = 1
-
-YOLOCFGPATH = '/home/rob/Desktop/P5BinPicking/DarkNet/'
+YOLOCFGPATH = '/DarkNet/'
+IMAGE_NAME = "webcam_capture.png"
 
 class Vision:
     def __init__(self):
-        self.detector = Detector(YOLOCFGPATH+'cfg/obj.data', YOLOCFGPATH+'cfg/yolov3-tiny.cfg',YOLOCFGPATH+'yolov3-tiny_final.weights')
+        self.current_directory = os.getcwd()
+        yolo_cfg_path_absolute = self.current_directory + YOLOCFGPATH
+        self.image_path = self.current_directory + "/" + IMAGE_NAME
+        self.detector = Detector(yolo_cfg_path_absolute + 'cfg/obj.data', yolo_cfg_path_absolute + 'cfg/yolov3-tiny.cfg', yolo_cfg_path_absolute + 'yolov3-tiny_final.weights')
         self.counter = 0
 
     def capture_image(self):
@@ -21,8 +22,7 @@ class Vision:
         #maybe a better way to get a way from the camera
         rs = realsense.pipeline()
         cfg = realsense.config()
-        cfg.enable_stream(realsense.stream.depth, 1280, 720, realsense.format.z16, 30)
-        cfg.enable_stream(realsense.stream.color, 1920, 1080, realsense.format.rgb8, 30)
+        #cfg.enable_stream(realsense.stream.depth, 1280, 720, realsense.format.z16, 30)
         cfg.enable_stream(realsense.stream.color, 1920, 1080, realsense.format.rgb8, 30)
         profile = rs.start(cfg)
 
@@ -36,19 +36,15 @@ class Vision:
 
             # Convert images to numpy arrays
             color_image = np.asanyarray(color_frame.get_data())
-
             color_image_ready_to_save = pimg.fromarray(color_image, 'RGB')
-
-            color_image_ready_to_save.save(YOLOCFGPATH+'webcam_capture.png')
+            color_image_ready_to_save.save(self.image_path)
 
         finally:
-
             # Stop streaming
             rs.stop()
 
-
     def detect_object(self, class_id):
-        results = self.detector.detect(YOLOCFGPATH+'webcam_capture.png')
+        results = self.detector.detect(self.image_path)
         self.draw_boxes(results)
         class_id1, class_id2 = class_id
         part = (-1, -1, -1)
@@ -63,11 +59,11 @@ class Vision:
                 x_coord = width/2 + d['left']
                 y_coord = height/2 + d['top']
                 if height > width:
-                    orientation = HORIZONTAL
+                    orientation = OrientationEnum.HORIZONTAL.value
                 elif width > height:
-                    orientation = VERTICAL
+                    orientation = OrientationEnum.VERTICAL.value
                 else:
-                    orientation = HORIZONTAL
+                    orientation = OrientationEnum.HORIZONTAL.value
                     print("[W] Could not determine orientation, using 1 as default")
                 part = (x_coord, y_coord, orientation)
                 break
@@ -75,7 +71,7 @@ class Vision:
         return part
 
     def draw_boxes(self, results):
-        source_img = pimg.open(YOLOCFGPATH+'webcam_capture.png').convert("RGBA")
+        source_img = pimg.open(self.image_path).convert("RGBA")
         for i in range(len(results)):
             d = results[i]
             if d['prob'] > 0.6:
@@ -91,7 +87,7 @@ class Vision:
         source_img.save('boundingboxes.png')
 
     def find_flipped_parts(self):
-        results = self.detector.detect(YOLOCFGPATH+'webcam_capture.png')
+        results = self.detector.detect(self.image_path)
         parts_to_flip = []
         for i in range(len(results)):
             d = results[i]
@@ -104,11 +100,11 @@ class Vision:
                 y_coord = height / 2 + d['top']
                 gripper = PartEnum.BACKCOVER.value
                 if height > width:
-                    orientation = HORIZONTAL
+                    orientation = OrientationEnum.HORIZONTAL.value
                 elif width > height:
-                    orientation = VERTICAL
+                    orientation = OrientationEnum.VERTICAL.value
                 else:
-                    orientation = HORIZONTAL
+                    orientation = OrientationEnum.HORIZONTAL.value
                     print("[W] Could not determine orientation, using 1 as default")
                 part = [gripper, x_coord, y_coord, orientation]
                 parts_to_flip.append(part)
@@ -121,16 +117,16 @@ class Vision:
                 y_coord = height / 2 + d['top']
                 gripper = PartEnum.PCB.value
                 if height > width:
-                    orientation = HORIZONTAL
+                    orientation = OrientationEnum.HORIZONTAL.value
                 elif width > height:
-                    orientation = VERTICAL
+                    orientation = OrientationEnum.VERTICAL.value
                 else:
-                    orientation = HORIZONTAL
+                    orientation = OrientationEnum.HORIZONTAL.value
                 print("[W] Could not determine orientation, using 1 as default")
                 part = [gripper, x_coord, y_coord, orientation]
                 parts_to_flip.append(part)
         print(parts_to_flip)
         return parts_to_flip
 
-
-            
+    def get_image_path(self):
+        return self.image_path
