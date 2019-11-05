@@ -11,7 +11,7 @@ IMAGE_NAME = "webcam_capture.png"
 
 
 class Vision:
-    def __init__(self):
+    def __init__(self, is_test=False):
         self.rs = realsense.pipeline()
         self.current_directory = os.getcwd()
         yolo_cfg_path_absolute = self.current_directory + YOLOCFGPATH
@@ -19,10 +19,12 @@ class Vision:
         self.detector = Detector(yolo_cfg_path_absolute + 'cfg/obj.data', yolo_cfg_path_absolute + 'cfg/yolov3-tiny.cfg', yolo_cfg_path_absolute + 'yolov3-tiny_final.weights')
         self.counter = 0
         self.first_run = True
+        self.is_test = is_test
 
     def __del__(self):
-        # Stop streaming
-        self.rs.stop()
+        if not self.is_test:
+            # Stop streaming
+            self.rs.stop()
 
     def capture_image(self):
         if self.first_run:
@@ -44,7 +46,13 @@ class Vision:
         color_image = np.asanyarray(color_frame.get_data())
         color_image_ready_to_save = pimg.fromarray(color_image, 'RGB')
         color_image_ready_to_save.save(self.image_path)
-        return color_image_ready_to_save
+        np_image = np.array(color_image_ready_to_save)
+
+        if self.is_test:
+            self.rs.stop()
+            input()
+
+        return np_image
 
     def detect_object(self, class_id):
         results = self.detector.detect(self.image_path)

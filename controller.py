@@ -46,6 +46,7 @@ class Controller:
             x, y, orientation = self.get_part_location(colour_part_id)
         self.move_arm(x, y, orientation, colour_part_id)
         self.place_part(colour_part_id, z_offset)
+        self.move_robot.move_out_of_view()
 
     def place_part(self, part_id, z_offset):
         if part_id == PartEnum.BACKCOVER.value:

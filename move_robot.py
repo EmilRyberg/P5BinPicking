@@ -17,6 +17,8 @@ class MoveRobot:
         self.default_orientation = [0, 0, 0]
         self.gripper_tcp = [0, 0, 0.1535, 2.9024, -1.2023, 0]
         self.fuse_tcp = [0.057, -0.00109, 0.13215, -1.7600, -0.7291, 1.7601]
+        self.camera_pose_gripper = [-60, -60, -110, -100, -90, -75]
+        self.camera_pose_suction = [-5, -40, -100, -140, 0, -170]
         self.suction_tcp = [-0.12, 0, 0.095, 0, 1.5707, 0]
         self.current_part_id = None
         self.grip_has_been_called_flag = False
@@ -96,6 +98,9 @@ class MoveRobot:
 
     def move_to_home_l(self, speed=1.0):
         self.movel(self.home_pose_l, acc=1.0, vel=speed)
+
+    def move_to_camera(self, speed=1.0):
+        self.movej(self.camera_pose_gripper, acc=1.0, vel=speed)
 
     def move_out_of_view(self, speed=1.0):
         self.movej(self.move_out_of_view_pose, acc=1.0, vel=speed)
