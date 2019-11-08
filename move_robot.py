@@ -21,6 +21,11 @@ class MoveRobot:
         self.current_part_id = None
         self.grip_has_been_called_flag = False
 
+        self.align_fuse_point_1 = [281, 35, 62, 0.544, -0.557, 0.010]
+        self.align_fuse_point_2 = [296.8, 52.5, 39.8, 0.544, -0.557, 0.010]
+        self.align_fuse_point_3 = [286, 39, 37, 0.522, -0.534, 0.032]
+        self.align_fuse_point_4 = [292.7, 49.0, 24.4, 0.5276, -0.5319, 0.0190]
+
         done = False
         counter = 0
         while not done:
@@ -58,8 +63,8 @@ class MoveRobot:
                 done = True
 
         self.disable_suction()
-        self.move_gripper(0)
-        self.move_gripper(100)
+        #self.move_gripper(0)
+        #self.move_gripper(100)
 
     def __del__(self):
         self.stop_all()
@@ -74,7 +79,7 @@ class MoveRobot:
         self.robot.close()
         print("[INFO] Safely stopped robot and gripper")
 
-    def movel(self, pose, acc=1.0, vel=0.05, wait=True, relative=False):
+    def movel(self, pose, acc=1.0, vel=0.2, wait=True, relative=False):
         pose_local = pose.copy()
         print("goal pose in mm: ", pose_local)
         pose_local[0] *= 0.001
@@ -100,12 +105,13 @@ class MoveRobot:
     def move_out_of_view(self, speed=1.0):
         self.movej(self.move_out_of_view_pose, acc=1.0, vel=speed)
 
-    def open_gripper(self):
+    def open_gripper(self, width=100):
         msg = "release()\n"
         msg = msg.encode()
         self.gripper.send(msg)
         time.sleep(1)
-        self.move_gripper(100)
+        if width < 10:
+            self.move_gripper(width)
 
     def close_gripper(self):
         msg = "grip(20,0)\n"
@@ -205,14 +211,28 @@ class MoveRobot:
             self.stop_all()
         self.grip_has_been_called_flag = False
 
+    def align(self):
+        if self.current_part_id == PartEnum.FUSE.value:
+            self.move_to_home_l()
+            self.movel(self.align_fuse_point_1, vel=1)
+            self.movel(self.align_fuse_point_2, vel=0.2)
+            self.open_gripper(width=10)
+            self.movel(self.align_fuse_point_3, vel=1)
+            self.movel(self.align_fuse_point_4, vel=0.2)
+            self.close_gripper()
+            self.movel(self.align_fuse_point_3, vel=0.2)
+
 
 if __name__ == "__main__":
     robot = MoveRobot("192.168.1.148")
     time.sleep(1)
     print("init done")
 
-    robot.grip(0, -400, 0, 2)
-    robot.place(0, -300)
+    robot.robot.set_tcp(robot.fuse_tcp)
+    robot.move_to_home_l()
+    robot.current_part_id = PartEnum.FUSE.value
+    robot.align()
+    robot.move_to_home_l()
 
     robot.stop_all()
 
