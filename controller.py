@@ -2,7 +2,7 @@ from utils import part_id_to_name
 from move_robot import MoveRobot
 from vision import Vision
 from enums import PartEnum
-from class_converter import convert_part_id
+from class_converter import convert_from_part_id
 from aruco import Calibration
 from PIL import Image as pimg
 import numpy as np
@@ -24,51 +24,59 @@ class Controller:
 
     def main_flow(self, colour_part_id):
         self.get_image()
-        self.flip_parts()
+        parts_to_flip = self.vision.find_flipped_parts()
+
         z_offset = 0
-        for i in range(NUMBER_OF_PARTS - 1): #leaving front cover out for later choice of colour
-            part_id = i
-            x, y, orientation = self.get_part_location(part_id)
-            while x is None:
-                print("[W]: Could not find required part in image, please move the part and try again. Part: ", part_id_to_name(part_id))
-                input("Press Enter to continue...")
-                self.get_image()
-                x, y, orientation = self.get_part_location(part_id)
-            #print("[D]: Position: ", position, " orientation = ", orientation)
-            self.move_arm(x, y, orientation, part_id)
-            self.place_part(part_id, z_offset)
-            z_offset += 25
-        x, y, orientation = self.get_part_location(colour_part_id) #3: black, 4: white, 5: blue
-        while x is None:
-            print("[W]: Could not find required part in image, please move the part and try again. Part: ", part_id_to_name(colour_part_id))
-            input("Press Enter to continue...")
-            self.get_image()
-            x, y, orientation = self.get_part_location(colour_part_id)
-        self.move_arm(x, y, orientation, colour_part_id)
-        self.place_part(colour_part_id, z_offset)
+        should_flip_part = self.parts_to_flip_contains(parts_to_flip, PartEnum.BACKCOVER.value)
+        self.pick_and_place_part(PartEnum.BACKCOVER.value, z_offset, should_flip_part)
+
+        z_offset = 20
+        should_flip_part = self.parts_to_flip_contains(parts_to_flip, PartEnum.PCB.value)
+        self.pick_and_place_part(PartEnum.PCB.value, z_offset, should_flip_part)
+
+        z_offset = 30
+        self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=0)
+        self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=1)
+
+        z_offset = 30
+        should_flip_part = self.parts_to_flip_contains(parts_to_flip, colour_part_id)
+        self.pick_and_place_part(colour_part_id, z_offset, should_flip_part)
+
         self.move_robot.move_out_of_view()
 
-    def place_part(self, part_id, z_offset):
-        if part_id == PartEnum.BACKCOVER.value:
-            print("[I] Placing: ", part_id_to_name(part_id))
-        elif part_id == PartEnum.PCB.value:
-            print("[I] Placing: ", part_id_to_name(part_id))
-        elif part_id == PartEnum.FUSE.value:
-            print("[I] Placing: ", part_id_to_name(part_id))
-        elif 2 < part_id < 6: #ANY colour front cover
-            print("[I] Placing: ", part_id_to_name(part_id))
+    def pick_and_place_part(self, part_id, z_offset, should_be_flipped=False, fuse_id=0):
+        x, y, orientation = self.get_part_location(part_id)
+        while x is None:
+            print("[W]: Could not find required part in image, please move the part and try again. Part: ",
+                  part_id_to_name(part_id))
+            input("Press Enter to continue...")
+            self.get_image()
+            x, y, orientation = self.get_part_location(part_id)
+        # print("[D]: Position: ", position, " orientation = ", orientation)
+        self.move_and_grip(x, y, orientation, part_id)
+
+        # self.move_robot.align(part_id, should_be_flipped)
+
+        if not part_id == PartEnum.FUSE.value:
+            if not part_id == PartEnum.PCB.value:
+                self.move_robot.move_to_camera(is_pcb=False)
+            else:
+                self.move_robot.move_to_camera(is_pcb=True)
+
+        np_image = self.vision.capture_image()
+        is_facing_right = self.vision.is_facing_right(np_image)
+
+        if is_facing_right:
+            self.move_robot.place(FIXTURE_X, FIXTURE_Y, z_offset, reorient=False)
         else:
-            print("[WARNING] wrong part. ID recieved: ", part_id)
+            self.move_robot.place(FIXTURE_X, FIXTURE_Y, z_offset, reorient=False)
 
-        #Following if-else statement is used for simple placing in a stack
-        self.move_robot.place(FIXTURE_X, FIXTURE_Y, z_offset)
-
-    def move_arm(self, x, y, orientation, part_id):
+    def move_and_grip(self, x, y, orientation, part_id):
         print("[I] Moving arm")
         self.move_robot.grip(x, y, orientation, part_id)
 
     def get_part_location(self, part_id):
-        class_names = convert_part_id(part_id)
+        class_names = convert_from_part_id(part_id)
         x, y, orientation = self.vision.detect_object(class_names)
         if x == -1 and y == -1:
             return None, None, None
@@ -92,19 +100,13 @@ class Controller:
         else:
             return False
 
+    def parts_to_flip_contains(self, parts_to_flip, part_id):
+        filtered_array = [part for part in parts_to_flip if part[0] == part_id]
+        return True if len(filtered_array) > 0 else False
+
     def get_image(self):
         self.move_robot.move_out_of_view()
         self.np_image = self.vision.capture_image()
-
-    def flip_parts(self):
-        parts_to_flip = self.vision.find_flipped_parts()
-        for i in range(len(parts_to_flip)):
-            part = parts_to_flip[i]
-            gripper = part[0]
-            x = part[1]
-            y = part[2]
-            orientation = part[3]
-            print("[D]: Trying to flip object similar to: ", part_id_to_name(gripper), " with coordinates, X: ", x, " and y: ", y)
 
     def choose_action(self):
         print("Please write a command (write 'help' for a list of commands):")
