@@ -12,3 +12,10 @@ __pycache__/
 *.weights
 
 DarkNet/webcam_capture.png
+
+**/*/dataset/
+*.hdf5
+
+OrientationCNN/confusion_matrix.pdf
+
+*.png
