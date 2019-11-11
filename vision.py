@@ -5,10 +5,12 @@ from PIL import ImageDraw
 import numpy as np
 from enums import PartEnum, OrientationEnum
 import os
+from orientation_detector import OrientationDetector
+from class_converter import convert_to_part_id
 
 YOLOCFGPATH = '/DarkNet/'
 IMAGE_NAME = "webcam_capture.png"
-
+ORIENTATION_MODEL_PATH = "orientation_cnn.hdf5"
 
 class Vision:
     def __init__(self, is_test=False):
@@ -20,6 +22,7 @@ class Vision:
         self.counter = 0
         self.first_run = True
         self.is_test = is_test
+        self.orientationCNN = OrientationDetector(ORIENTATION_MODEL_PATH)
 
     def __del__(self):
         if not self.is_test:
@@ -109,7 +112,6 @@ class Vision:
                 height = d['bottom'] - d['top']
                 x_coord = width / 2 + d['left']
                 y_coord = height / 2 + d['top']
-                gripper = PartEnum.BACKCOVER.value
                 if height > width:
                     orientation = OrientationEnum.HORIZONTAL.value
                 elif width > height:
@@ -117,7 +119,8 @@ class Vision:
                 else:
                     orientation = OrientationEnum.HORIZONTAL.value
                     print("[W] Could not determine orientation, using 1 as default")
-                part = [gripper, x_coord, y_coord, orientation]
+                part_id = convert_to_part_id(classify)
+                part = (part_id, x_coord, y_coord, orientation)
                 parts_to_flip.append(part)
             elif d['class'] == 'PCBFlipped' and d['prob'] > 0.6:
                 classify = d['class']
@@ -126,7 +129,7 @@ class Vision:
                 height = d['bottom'] - d['top']
                 x_coord = width / 2 + d['left']
                 y_coord = height / 2 + d['top']
-                gripper = PartEnum.PCB.value
+                part_id = PartEnum.PCB.value
                 if height > width:
                     orientation = OrientationEnum.HORIZONTAL.value
                 elif width > height:
@@ -134,10 +137,13 @@ class Vision:
                 else:
                     orientation = OrientationEnum.HORIZONTAL.value
                 print("[W] Could not determine orientation, using 1 as default")
-                part = [gripper, x_coord, y_coord, orientation]
+                part = (part_id, x_coord, y_coord, orientation)
                 parts_to_flip.append(part)
         print(parts_to_flip)
         return parts_to_flip
+
+    def is_facing_right(self, np_image):
+        return self.orientationCNN.is_facing_right(np_image)
 
     def get_image_path(self):
         return self.image_path

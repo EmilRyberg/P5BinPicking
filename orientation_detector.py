@@ -13,6 +13,6 @@ class OrientationDetector:
         resized_image_np = np.array(resized_image)
         resized_image_np = np.expand_dims(resized_image_np, axis=0) / 255
         prediction = self.model.predict(resized_image_np)
-        if prediction > threshold:
+        if prediction >= threshold:
             return True
         return False
