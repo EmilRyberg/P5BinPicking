@@ -5,15 +5,13 @@ from PIL import ImageDraw
 import numpy as np
 from enums import PartEnum, OrientationEnum
 import os
-from orientation_detector import OrientationDetector
-from class_converter import convert_to_part_id
 
 YOLOCFGPATH = '/DarkNet/'
 IMAGE_NAME = "webcam_capture.png"
-ORIENTATION_MODEL_PATH = "orientation_cnn.hdf5"
+
 
 class Vision:
-    def __init__(self, is_test=False):
+    def __init__(self):
         self.rs = realsense.pipeline()
         self.current_directory = os.getcwd()
         yolo_cfg_path_absolute = self.current_directory + YOLOCFGPATH
@@ -21,13 +19,10 @@ class Vision:
         self.detector = Detector(yolo_cfg_path_absolute + 'cfg/obj.data', yolo_cfg_path_absolute + 'cfg/yolov3-tiny.cfg', yolo_cfg_path_absolute + 'yolov3-tiny_final.weights')
         self.counter = 0
         self.first_run = True
-        self.is_test = is_test
-        self.orientationCNN = OrientationDetector(ORIENTATION_MODEL_PATH)
 
     def __del__(self):
-        if not self.is_test:
-            # Stop streaming
-            self.rs.stop()
+        # Stop streaming
+        self.rs.stop()
 
     def capture_image(self):
         if self.first_run:
@@ -49,13 +44,7 @@ class Vision:
         color_image = np.asanyarray(color_frame.get_data())
         color_image_ready_to_save = pimg.fromarray(color_image, 'RGB')
         color_image_ready_to_save.save(self.image_path)
-        np_image = np.array(color_image_ready_to_save)
-
-        if self.is_test:
-            self.rs.stop()
-            input()
-
-        return np_image
+        return color_image_ready_to_save
 
     def detect_object(self, class_id):
         results = self.detector.detect(self.image_path)
@@ -112,6 +101,7 @@ class Vision:
                 height = d['bottom'] - d['top']
                 x_coord = width / 2 + d['left']
                 y_coord = height / 2 + d['top']
+                gripper = PartEnum.BACKCOVER.value
                 if height > width:
                     orientation = OrientationEnum.HORIZONTAL.value
                 elif width > height:
@@ -119,8 +109,7 @@ class Vision:
                 else:
                     orientation = OrientationEnum.HORIZONTAL.value
                     print("[W] Could not determine orientation, using 1 as default")
-                part_id = convert_to_part_id(classify)
-                part = (part_id, x_coord, y_coord, orientation)
+                part = [gripper, x_coord, y_coord, orientation]
                 parts_to_flip.append(part)
             elif d['class'] == 'PCBFlipped' and d['prob'] > 0.6:
                 classify = d['class']
@@ -129,7 +118,7 @@ class Vision:
                 height = d['bottom'] - d['top']
                 x_coord = width / 2 + d['left']
                 y_coord = height / 2 + d['top']
-                part_id = PartEnum.PCB.value
+                gripper = PartEnum.PCB.value
                 if height > width:
                     orientation = OrientationEnum.HORIZONTAL.value
                 elif width > height:
@@ -137,13 +126,10 @@ class Vision:
                 else:
                     orientation = OrientationEnum.HORIZONTAL.value
                 print("[W] Could not determine orientation, using 1 as default")
-                part = (part_id, x_coord, y_coord, orientation)
+                part = [gripper, x_coord, y_coord, orientation]
                 parts_to_flip.append(part)
         print(parts_to_flip)
         return parts_to_flip
-
-    def is_facing_right(self, np_image):
-        return self.orientationCNN.is_facing_right(np_image)
 
     def get_image_path(self):
         return self.image_path

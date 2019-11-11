@@ -7,8 +7,7 @@ class PartEnum(Enum):
     FUSE = 2
     BLACKCOVER = 3
     WHITECOVER = 4
-    BLUECOVER = 5,
-    INVALID = 6
+    BLUECOVER = 5
 
 
 class OrientationEnum(Enum):
