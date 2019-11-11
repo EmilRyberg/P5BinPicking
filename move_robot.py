@@ -27,16 +27,29 @@ class MoveRobot:
         self.align_fuse_point_4 = [292.7, 49.0, 24.4, 0.5276, -0.5319, 0.0190]
 
         self.align_pcb_1 = [5, -62, -120, -86, 90, 50] #joint values
-        self.align_pcb_2 = [305, -82, 170, 0.0357, -0.02, -1.57] #Cartesian coordinates
-        self.align_pcb_3 = [305, -82, 230, 0.0357, -0.02, -1.57]  # Cartesian coordinates
-        self.align_pcb_4 = [22, -57, -150, -70, 53, 61]  #Joint values
-        self.align_pcb_5 = [295, -138, 55, 1.47, 1.74, 4.16] #Cartesian coordinates
-        self.align_pcb_6 = [22, -57, -150, -70, 53, 61]  #Joint values
+        self.align_pcb_2 = [388, 2, 233, 0.6154, -1.5228, 0.62] #Cartesian coordinates
+        self.align_pcb_3 = [388, 2, 280, 0.6154, -1.5228, 0.62]  # Cartesian coordinates
 
         self.align_pcb_flipped_1 = [21, -85, -102, -85, 90, -110] #joint values
-        self.align_pcb_flipped_2 = [500, 100, 190, 1.07, -1.11, -0.07] #Cartesian coordinates
-        self.align_pcb_flipped_3 = [500, 100, 250, 1.07, -1.11, -0.07]  # Cartesian coordinates
-        
+        self.align_pcb_flipped_2 = [373, -16.5, 257, 2.405, 1.018, 2.52] #Cartesian coordinates
+        self.align_pcb_flipped_3 = [373, -16.5, 300, 2.405, 1.018, 2.52]  # Cartesian coordinates
+
+        # pick up
+        self.align_pcb_pick_1 = [22, -57, -150, -70, 53, 61]  #Joint values
+        self.align_pcb_pick_2 = [362, -23, 47, 0.177, -1.1775, 1.194] #Cartesian coordinates
+        self.align_pcb_pick_3 = [336.5, -47, 67.5, 0.177, -1.1775, 1.194]  # Cartesian
+
+        self.align_cover_1 = [122.5, -71.6, 105.5, -84, -13, -60] # joint
+        self.align_cover_2 = [560, -253, 134.7, 1.4433, -0.333, -1.095] # Cartesian
+
+        self.align_cover_flipped_1 = [3.5, -143, -45, -186, 53, 120] # joint
+        self.align_cover_flipped_2 = [546, -265, 136.5, 3.124, 0.44, 2.146] # Cartesian
+
+        # cover pick up
+        self.align_cover_pick_1 = [534, -230, 160, 1.37, -0.334, -1.118] # Cartesian
+        self.align_cover_pick_2 = [530, -295, 100, 1.383, -0.354, -1.092] # Cartesian
+        self.align_cover_pick_3 = [562, -270, 91, 1.3830, -0.3542, -1.0915] # Cartesian
+
         done = False
         counter = 0
         while not done:
