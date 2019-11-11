@@ -26,6 +26,17 @@ class MoveRobot:
         self.align_fuse_point_3 = [286, 39, 37, 0.522, -0.534, 0.032]
         self.align_fuse_point_4 = [292.7, 49.0, 24.4, 0.5276, -0.5319, 0.0190]
 
+        self.align_pcb_1 = [5, -62, -120, -86, 90, 50] #joint values
+        self.align_pcb_2 = [305, -82, 170, 0.0357, -0.02, -1.57] #Cartesian coordinates
+        self.align_pcb_3 = [305, -82, 230, 0.0357, -0.02, -1.57]  # Cartesian coordinates
+        self.align_pcb_4 = [22, -57, -150, -70, 53, 61]  #Joint values
+        self.align_pcb_5 = [295, -138, 55, 1.47, 1.74, 4.16] #Cartesian coordinates
+        self.align_pcb_6 = [22, -57, -150, -70, 53, 61]  #Joint values
+
+        self.align_pcb_flipped_1 = [21, -85, -102, -85, 90, -110] #joint values
+        self.align_pcb_flipped_2 = [500, 100, 190, 1.07, -1.11, -0.07] #Cartesian coordinates
+        self.align_pcb_flipped_3 = [500, 100, 250, 1.07, -1.11, -0.07]  # Cartesian coordinates
+        
         done = False
         counter = 0
         while not done:
