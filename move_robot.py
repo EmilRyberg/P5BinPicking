@@ -49,12 +49,18 @@ class MoveRobot:
         self.align_cover_flipped_2 = [546, -265, 136.5, 3.124, 0.44, 2.146] # Cartesian
         self.align_cover_flipped_3 = [113, -75, 105, -83, -19, -61]
 
-        self.align_cover_pick_1 = [534, -230, 160, 1.37, -0.334, -1.118] # Cartesian
+        self.align_cover_pick_1 = [531, -265, 160, 1.32, -0.334, -1.13] # Cartesian
         self.align_cover_pick_2 = [539.9, -287.6, 99.3, 1.397, -0.316, -1.096] # Cartesian
         self.align_cover_pick_3 = [563.4, -268.1, 92.3, 1.397, -0.316, -1.096] # Cartesian
         self.align_cover_pick_4 = [564.5, -267.4, 93.6, 1.402, -0.343, -1.087]
         self.align_cover_pick_5 = [539, -287, 101, 1.402, -0.343, -1.087]
         self.align_cover_pick_6 = [-61, -62, -107, -100, 89, -61] #joint
+
+        self.test_back_loc = (-255, -280)
+        self.test_pcb_loc = (-174, -362)
+        self.test_fuse_1_loc = (-138, -278)
+        self.test_fuse_2_loc = (-100, -315)
+        self.test_top_loc = (-107, -425)
 
         done = False
         counter = 0
@@ -94,7 +100,7 @@ class MoveRobot:
 
         self.disable_suction()
         #self.move_gripper(0)
-        #self.move_gripper(100)
+        self.move_gripper(50)
 
     def __del__(self):
         self.stop_all()
@@ -144,14 +150,14 @@ class MoveRobot:
         msg = msg.encode()
         self.gripper.send(msg)
         time.sleep(1)
-        if width < 10:
+        if width < 5:
             self.move_gripper(width)
 
     def close_gripper(self):
         msg = "grip(40,0)\n"
         msg = msg.encode()
         self.gripper.send(msg)
-        time.sleep(3)
+        time.sleep(2)
 
     def move_gripper(self, position):
         msg = "move({})\n".format(position)
@@ -184,7 +190,7 @@ class MoveRobot:
             self.move_to_home()
             self.robot.set_tcp(self.fuse_tcp)
             self.move_to_home_l()
-            if orientation == OrientationEnum.HORIZONTAL.value:
+            if orientation == OrientationEnum.VERTICAL.value:
                 angle = 180 #DONE
                 angle = math.radians(angle)
                 orientation_vector = [0, 0, angle]
@@ -199,7 +205,7 @@ class MoveRobot:
         else: #covers
             print("gripping cover")
             self.move_to_home()
-            if orientation == OrientationEnum.HORIZONTAL.value:
+            if orientation == OrientationEnum.VERTICAL.value:
                 angle = 90
                 angle = math.radians(angle)
                 orientation_vector = [0, 0, angle]
@@ -245,6 +251,44 @@ class MoveRobot:
             self.stop_all()
         self.grip_has_been_called_flag = False
 
+    def assemble(self, x=320, y=-350, z=0, flipped=0, fuse_id=0):
+        if self.current_part_id == PartEnum.BACKCOVER.value:
+            self.move_to_home_l()
+            self.movel([x, y, z+20, 0, 0, 0], vel=1)
+            self.movel([x, y, z+0.5, 0, 0, 0], vel=0.2)
+            self.open_gripper(width=20)
+            self.movel([x, y, z+20, 0, 0, 0], vel=0.2)
+        if self.current_part_id == PartEnum.PCB.value:
+            self.move_to_home_l()
+            self.movel([325-320+x, -353--350+y, 20+z, 0, 0, -0.24], vel=1)
+            self.movel([325 - 320 + x, -353 - -350 + y, -6 + z, 0, 0, -0.24])
+            self.disable_suction()
+            self.movel([325 - 320 + x, -353 - -350 + y, 20 + z, 0, 0, -0.24])
+        if self.current_part_id == PartEnum.FUSE.value:
+            self.move_to_home_l()
+            if fuse_id == 0:
+                self.movel([298.4-320+x, -322--350+y, z+40, 0, 0, 3.14])
+                self.movel([298.4 - 320 + x, -322 - -350 + y, z + 11, 0, 0, 3.14], vel=0.05)
+                self.open_gripper(width=7)
+                self.movel([298.4 - 320 + x, -322 - -350 + y, z + 40, 0, 0, 3.14])
+            else:
+                self.movel([306.8 - 320 + x, -330.8 - -350 + y, z + 40, 0, 0, 3.14])
+                self.movel([306.8 - 320 + x, -330.8 - -350 + y, z + 11, 0, 0, 3.14], vel=0.05)
+                self.open_gripper(width=7)
+                self.movel([306.8 - 320 + x, -330.8 - -350 + y, z + 40, 0, 0, 3.14])
+            self.move_gripper(30)
+        if self.current_part_id == PartEnum.BLACKCOVER.value:
+            self.move_to_home_l()
+            self.movel([x, y, z+40, 0, 0, 0])
+            self.movel([x, y, z+13, 0, 0, 0])
+            self.open_gripper(width=20)
+            self.movel([x, y, z+40, 0, 0, 0])
+            self.movel([x, y, z+40, 0, 0, 1.57], vel=0.2, wait=False)
+            self.close_gripper()
+            self.movel([x, y, z+19, 0, 0, 1.57], vel=0.05)
+            self.movel([x, y, z+40, 0, 0, 1.57])
+            self.open_gripper()
+
     def align(self):
         if not self.grip_has_been_called_flag:
             print("[FATAL] align has been called before grip, exiting")
@@ -258,13 +302,13 @@ class MoveRobot:
             self.movel(self.align_fuse_point_4, vel=0.2)
             self.close_gripper()
             self.movel(self.align_fuse_point_3, vel=0.2)
-        elif self.current_part_id == PartEnum.BACKCOVER.value: # not flipped
+        elif self.current_part_id == PartEnum.BACKCOVER.value or self.current_part_id == PartEnum.BLACKCOVER.value: # not flipped
             self.move_to_home_l()
             self.movej(self.align_cover_1, vel=1)
             self.movel(self.align_cover_2, vel=0.2)
             self.open_gripper(width=10)
             self.movej(self.align_cover_1, vel=1)
-            #self.movel(self.align_cover_pick_1, vel=1)
+            self.movel(self.align_cover_pick_1, vel=1)
             self.movel(self.align_cover_pick_2, vel=1)
             self.movel(self.align_cover_pick_3, vel=0.2)
             self.close_gripper()
@@ -312,15 +356,26 @@ if __name__ == "__main__":
     time.sleep(1)
     print("init done")
 
-    print(robot.getl())
-
-    #exit(1)
-
-    robot.grip_has_been_called_flag = True
-    robot.robot.set_tcp(robot.gripper_tcp)
-    robot.current_part_id = "back_flipped"
-    robot.move_to_home_l()
+    robot.move_to_home()
+    robot.grip(robot.test_back_loc[0], robot.test_back_loc[1], OrientationEnum.VERTICAL.value, PartEnum.BACKCOVER.value)
     robot.align()
+    robot.assemble()
+
+    robot.grip(robot.test_pcb_loc[0], robot.test_pcb_loc[1], OrientationEnum.VERTICAL.value, PartEnum.PCB.value)
+    robot.align()
+    robot.assemble()
+
+    robot.grip(robot.test_fuse_1_loc[0], robot.test_fuse_1_loc[1], OrientationEnum.VERTICAL.value, PartEnum.FUSE.value)
+    robot.align()
+    robot.assemble(fuse_id=0)
+    robot.grip(robot.test_fuse_2_loc[0], robot.test_fuse_2_loc[1], OrientationEnum.VERTICAL.value, PartEnum.FUSE.value)
+    robot.align()
+    robot.assemble(fuse_id=1)
+
+    robot.grip(robot.test_top_loc[0], robot.test_top_loc[1], OrientationEnum.VERTICAL.value, PartEnum.BLACKCOVER.value)
+    robot.align()
+    robot.assemble()
+
     robot.move_to_home_l()
 
     robot.stop_all()
