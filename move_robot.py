@@ -236,6 +236,9 @@ class MoveRobot:
         self.grip_has_been_called_flag = False
 
     def align(self):
+        if not self.grip_has_been_called_flag:
+            print("[FATAL] align has been called before grip, exiting")
+            self.stop_all()
         if self.current_part_id == PartEnum.FUSE.value:
             self.move_to_home_l()
             self.movel(self.align_fuse_point_1, vel=1)
@@ -245,6 +248,44 @@ class MoveRobot:
             self.movel(self.align_fuse_point_4, vel=0.2)
             self.close_gripper()
             self.movel(self.align_fuse_point_3, vel=0.2)
+        elif self.current_part_id == PartEnum.BACKCOVER.value: # not flipped
+            self.move_to_home_l()
+            self.movej(self.align_cover_1, vel=1)
+            self.movel(self.align_cover_2, vel=0.2)
+            self.open_gripper(width=10)
+            self.movel(self.align_cover_pick_1, vel=1)
+            self.movel(self.align_cover_pick_2, vel=1)
+            self.movel(self.align_cover_pick_3, vel=0.2)
+            self.close_gripper()
+            self.movel(self.align_cover_pick_2, vel=0.2)
+        elif self.current_part_id == "back_flipped":
+            self.move_to_home_l()
+            self.movej(self.align_cover_flipped_1, vel=1)
+            self.movel(self.align_cover_flipped_2, vel=0.2)
+            self.open_gripper(width=10)
+            self.movel(self.align_cover_pick_1, vel=1)
+            self.movel(self.align_cover_pick_2, vel=1)
+            self.movel(self.align_cover_pick_3, vel=0.2)
+            self.close_gripper()
+            self.movel(self.align_cover_pick_2, vel=0.2)
+        elif self.current_part_id == PartEnum.PCB.value: # not flipped
+            self.movej(self.align_pcb_1, vel=1)
+            self.movel(self.align_pcb_2, vel=0.2)
+            self.disable_suction()
+            self.movel(self.align_pcb_3, vel=1)
+            self.movej(self.align_pcb_pick_1, vel=1)
+            self.enable_suction()
+            self.movel(self.align_pcb_pick_2, vel=0.2)
+            self.movel(self.align_pcb_pick_3, vel=0.2)
+        elif self.current_part_id == "pcb_flipped":
+            self.movej(self.align_pcb_flipped_1, vel=1)
+            self.movel(self.align_pcb_flipped_2, vel=0.2)
+            self.disable_suction()
+            self.movel(self.align_pcb_flipped_3, vel=1)
+            self.movej(self.align_pcb_pick_1, vel=1)
+            self.enable_suction()
+            self.movel(self.align_pcb_pick_2, vel=0.2)
+            self.movel(self.align_pcb_pick_3, vel=0.2)
 
 
 if __name__ == "__main__":
@@ -252,9 +293,10 @@ if __name__ == "__main__":
     time.sleep(1)
     print("init done")
 
+    robot.grip_has_been_called_flag = True
     robot.robot.set_tcp(robot.fuse_tcp)
-    robot.move_to_home_l()
     robot.current_part_id = PartEnum.FUSE.value
+    robot.move_to_home_l()
     robot.align()
     robot.move_to_home_l()
 
