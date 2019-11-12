@@ -21,34 +21,40 @@ class MoveRobot:
         self.current_part_id = None
         self.grip_has_been_called_flag = False
 
-        self.align_fuse_point_1 = [281, 35, 62, 0.544, -0.557, 0.010]
-        self.align_fuse_point_2 = [296.8, 52.5, 39.8, 0.544, -0.557, 0.010]
-        self.align_fuse_point_3 = [286, 39, 37, 0.522, -0.534, 0.032]
-        self.align_fuse_point_4 = [292.7, 49.0, 24.4, 0.5276, -0.5319, 0.0190]
+        self.align_fuse_point_1 = [258.3808266269915, 182.66080196127277, 50.755338740619685, 0.5129225399673327, -0.5681073061405235, -0.021312928850932115]
+        self.align_fuse_point_2 = [269.56669707049855, 192.5271576116136, 36.52450508933613, 0.5352153513500437, -0.5851532800726972, -0.022296119825804664]
+        self.align_fuse_point_3 = [256.79863096450663, 180.323917259804, 38.04563142826764, 0.5128000908988749, -0.5681263381546497, -0.021276095366553276]
+        self.align_fuse_point_4 = [267.24826717836964, 189.57576475222854, 23.53934054782497, 0.5129307828342723, -0.5681049276113338, -0.02124040568020565]
 
-        self.align_pcb_1 = [5, -62, -120, -86, 90, 50] #joint values
-        self.align_pcb_2 = [388, 2, 233, 0.6154, -1.5228, 0.62] #Cartesian coordinates
+
+        self.align_pcb_1 = [2, -62, -108, -97, 89, 46] #joint values
+        self.align_pcb_2 = [381, -12, 272, 0.61, -1.51, 0.64] #Cartesian coordinates
         self.align_pcb_3 = [388, 2, 280, 0.6154, -1.5228, 0.62]  # Cartesian coordinates
+        self.align_pcb_4 = [-6, -51, -114, -96, 89, 44]
 
-        self.align_pcb_flipped_1 = [21, -85, -102, -85, 90, -110] #joint values
+        self.align_pcb_flipped_1 = [22, -86, -84, -98, 89, -110]
         self.align_pcb_flipped_2 = [373, -16.5, 257, 2.405, 1.018, 2.52] #Cartesian coordinates
         self.align_pcb_flipped_3 = [373, -16.5, 300, 2.405, 1.018, 2.52]  # Cartesian coordinates
+        self.align_pcb_flipped_4 = [-16, -55, -107, -104, 87, 29]
 
-        # pick up
         self.align_pcb_pick_1 = [22, -57, -150, -70, 53, 61]  #Joint values
         self.align_pcb_pick_2 = [362, -23, 47, 0.177, -1.1775, 1.194] #Cartesian coordinates
         self.align_pcb_pick_3 = [336.5, -47, 67.5, 0.177, -1.1775, 1.194]  # Cartesian
+
 
         self.align_cover_1 = [122.5, -71.6, 105.5, -84, -13, -60] # joint
         self.align_cover_2 = [560, -253, 134.7, 1.4433, -0.333, -1.095] # Cartesian
 
         self.align_cover_flipped_1 = [3.5, -143, -45, -186, 53, 120] # joint
         self.align_cover_flipped_2 = [546, -265, 136.5, 3.124, 0.44, 2.146] # Cartesian
+        self.align_cover_flipped_3 = [113, -75, 105, -83, -19, -61]
 
-        # cover pick up
         self.align_cover_pick_1 = [534, -230, 160, 1.37, -0.334, -1.118] # Cartesian
-        self.align_cover_pick_2 = [530, -295, 100, 1.383, -0.354, -1.092] # Cartesian
-        self.align_cover_pick_3 = [562, -270, 91, 1.3830, -0.3542, -1.0915] # Cartesian
+        self.align_cover_pick_2 = [539.9, -287.6, 99.3, 1.397, -0.316, -1.096] # Cartesian
+        self.align_cover_pick_3 = [563.4, -268.1, 92.3, 1.397, -0.316, -1.096] # Cartesian
+        self.align_cover_pick_4 = [564.5, -267.4, 93.6, 1.402, -0.343, -1.087]
+        self.align_cover_pick_5 = [539, -287, 101, 1.402, -0.343, -1.087]
+        self.align_cover_pick_6 = [-61, -62, -107, -100, 89, -61] #joint
 
         done = False
         counter = 0
@@ -103,6 +109,10 @@ class MoveRobot:
         self.robot.close()
         print("[INFO] Safely stopped robot and gripper")
 
+    def getl(self):
+        temp = self.robot.getl()
+        return [temp[0]*1000, temp[1]*1000, temp[2]*1000, temp[3], temp[4], temp[5]]
+
     def movel(self, pose, acc=1.0, vel=0.2, wait=True, relative=False):
         pose_local = pose.copy()
         print("goal pose in mm: ", pose_local)
@@ -138,7 +148,7 @@ class MoveRobot:
             self.move_gripper(width)
 
     def close_gripper(self):
-        msg = "grip(20,0)\n"
+        msg = "grip(40,0)\n"
         msg = msg.encode()
         self.gripper.send(msg)
         time.sleep(3)
@@ -253,26 +263,34 @@ class MoveRobot:
             self.movej(self.align_cover_1, vel=1)
             self.movel(self.align_cover_2, vel=0.2)
             self.open_gripper(width=10)
-            self.movel(self.align_cover_pick_1, vel=1)
+            self.movej(self.align_cover_1, vel=1)
+            #self.movel(self.align_cover_pick_1, vel=1)
             self.movel(self.align_cover_pick_2, vel=1)
             self.movel(self.align_cover_pick_3, vel=0.2)
             self.close_gripper()
-            self.movel(self.align_cover_pick_2, vel=0.2)
+            self.movel(self.align_cover_pick_4, vel=0.2)
+            self.movel(self.align_cover_pick_5, vel=0.2)
+            self.movej(self.align_cover_pick_6, vel=1)
         elif self.current_part_id == "back_flipped":
             self.move_to_home_l()
             self.movej(self.align_cover_flipped_1, vel=1)
             self.movel(self.align_cover_flipped_2, vel=0.2)
             self.open_gripper(width=10)
-            self.movel(self.align_cover_pick_1, vel=1)
+            self.movej(self.align_cover_flipped_1, vel=1)
+            #self.movel(self.align_cover_pick_1, vel=1)
+            self.movej(self.align_cover_flipped_3, vel=1) # big turn
             self.movel(self.align_cover_pick_2, vel=1)
             self.movel(self.align_cover_pick_3, vel=0.2)
             self.close_gripper()
-            self.movel(self.align_cover_pick_2, vel=0.2)
+            self.movel(self.align_cover_pick_4, vel=0.2)
+            self.movel(self.align_cover_pick_5, vel=0.2)
+            self.movej(self.align_cover_pick_6, vel=1)
         elif self.current_part_id == PartEnum.PCB.value: # not flipped
             self.movej(self.align_pcb_1, vel=1)
             self.movel(self.align_pcb_2, vel=0.2)
             self.disable_suction()
-            self.movel(self.align_pcb_3, vel=1)
+            #self.movel(self.align_pcb_3, vel=1)
+            self.movej(self.align_pcb_4, vel=1)
             self.movej(self.align_pcb_pick_1, vel=1)
             self.enable_suction()
             self.movel(self.align_pcb_pick_2, vel=0.2)
@@ -281,7 +299,8 @@ class MoveRobot:
             self.movej(self.align_pcb_flipped_1, vel=1)
             self.movel(self.align_pcb_flipped_2, vel=0.2)
             self.disable_suction()
-            self.movel(self.align_pcb_flipped_3, vel=1)
+            self.movej(self.align_pcb_flipped_1, vel=1)
+            self.movej(self.align_pcb_flipped_4, vel=1)
             self.movej(self.align_pcb_pick_1, vel=1)
             self.enable_suction()
             self.movel(self.align_pcb_pick_2, vel=0.2)
@@ -293,9 +312,13 @@ if __name__ == "__main__":
     time.sleep(1)
     print("init done")
 
+    print(robot.getl())
+
+    #exit(1)
+
     robot.grip_has_been_called_flag = True
-    robot.robot.set_tcp(robot.fuse_tcp)
-    robot.current_part_id = PartEnum.FUSE.value
+    robot.robot.set_tcp(robot.gripper_tcp)
+    robot.current_part_id = "back_flipped"
     robot.move_to_home_l()
     robot.align()
     robot.move_to_home_l()
