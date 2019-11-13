@@ -1,5 +1,5 @@
 classes = 11
-train  = /home/rob/Desktop/P5BinPicking/DarkNet/cfg/train.txt
+train  = train.txt
 valid  = test.txt
-names = /home/rob/Desktop/P5BinPicking/DarkNet/cfg/obj.names
+names = /home/rob/Documents/rob5/P5BinPicking/DarkNet/cfg/obj.names
 backup = backup/

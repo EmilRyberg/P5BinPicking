@@ -185,6 +185,7 @@ class MoveRobot:
         self.robot.set_digital_out(self.suction_enable_pin, False)
 
     def grip(self, x, y, orientation, part_id): # 0 = part horizontal, 1 = part vertical
+        self.move_gripper(100)
         self.move_to_home()
         self.current_part_id = part_id
         self.grip_has_been_called_flag = True

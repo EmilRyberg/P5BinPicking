@@ -3,7 +3,7 @@ import math
 from enums import PartEnum
 
 
-def part_id_to_name(self, part_id):
+def part_id_to_name(part_id):
     if part_id == PartEnum.BACKCOVER.value:
         return "Back cover"
     elif part_id == PartEnum.PCB.value:

@@ -64,9 +64,9 @@ class Controller:
             is_facing_right = self.vision.is_facing_right(np_image)
 
         if is_facing_right:
-            self.move_robot.assemble(True, fuse_id)
+            self.move_robot.assemble(rotated=True, fuse_id=fuse_id)
         else:
-            self.move_robot.assemble(False, fuse_id)
+            self.move_robot.assemble(rotated=False, fuse_id=fuse_id)
 
     def move_and_grip(self, x, y, orientation, part_id):
         print("[I] Moving arm")
@@ -74,9 +74,9 @@ class Controller:
 
     def get_part_location(self, part_id):
         class_names = convert_from_part_id(part_id)
-        x, y, orientation = self.vision.detect_object(class_names)
+        new_part_id, x, y, orientation = self.vision.detect_object(class_names)
         if x == -1 and y == -1:
-            return None, None, None
+            return None, None, None, None
         x, y, _ = self.aruco.calibrate(self.np_image, x, y)
         if part_id == PartEnum.FUSE.value:
             fuse_in_restricted_area = self.fuse_area_check(y)
@@ -87,9 +87,7 @@ class Controller:
                 x, y, orientation = self.vision.detect_object(class_names)
                 x, y, _ = self.aruco.calibrate(self.np_image, x, y)
                 fuse_in_restricted_area = self.fuse_area_check(y)
-            return x, y, orientation
-        else:
-            return x, y, orientation
+        return new_part_id, x, y, orientation
 
     def fuse_area_check(self, fuse_y):
         if fuse_y < -500:

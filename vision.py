@@ -21,7 +21,6 @@ class Vision:
         self.detector = Detector(yolo_cfg_path_absolute + 'cfg/obj.data', yolo_cfg_path_absolute + 'cfg/yolov3-tiny.cfg', yolo_cfg_path_absolute + 'yolov3-tiny_final.weights')
         self.counter = 0
         self.first_run = True
-        self.is_test = is_test
         self.orientationCNN = OrientationDetector(ORIENTATION_MODEL_PATH)
 
     def __del__(self):
@@ -48,13 +47,13 @@ class Vision:
         color_image = np.asanyarray(color_frame.get_data())
         color_image_ready_to_save = pimg.fromarray(color_image, 'RGB')
         color_image_ready_to_save.save(self.image_path)
-        return color_image_ready_to_save
+        return color_image
 
     def detect_object(self, class_id):
         results = self.detector.detect(self.image_path)
         self.draw_boxes(results)
         class_id1, class_id2 = class_id
-        part = (-1, -1, -1)
+        part = (-1, -1, -1, -1)
         # result is an array of dictionaries
         for i in range(len(results)):
             d = results[i]
@@ -66,9 +65,9 @@ class Vision:
                 x_coord = width / 2 + d['left']
                 y_coord = height / 2 + d['top']
                 if height > width:
-                    orientation = OrientationEnum.HORIZONTAL.value
-                elif width > height:
                     orientation = OrientationEnum.VERTICAL.value
+                elif width > height:
+                    orientation = OrientationEnum.HORIZONTAL.value
                 else:
                     orientation = OrientationEnum.HORIZONTAL.value
                     print("[W] Could not determine orientation, using 1 as default")
