@@ -22,54 +22,51 @@ class Controller:
 
         print("[I] Controller running")
 
-    def main_flow(self, colour_id):
+    def main_flow(self, colour_part_id):
         self.get_image()
-        parts_to_flip = self.vision.find_flipped_parts()
 
         z_offset = 0
-        should_flip_part = self.parts_to_flip_contains(parts_to_flip, PartEnum.BACKCOVER.value)
-        self.pick_and_place_part(PartEnum.BACKCOVER.value, z_offset, should_flip_part)
+        self.pick_and_place_part(PartEnum.BACKCOVER.value, z_offset)
 
         z_offset = 20
-        should_flip_part = self.parts_to_flip_contains(parts_to_flip, PartEnum.PCB.value)
-        self.pick_and_place_part(PartEnum.PCB.value, z_offset, should_flip_part)
+        self.pick_and_place_part(PartEnum.PCB.value, z_offset)
 
         z_offset = 30
         self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=0)
         self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=1)
 
         z_offset = 30
-        should_flip_part = self.parts_to_flip_contains(parts_to_flip, colour_part_id)
-        self.pick_and_place_part(colour_part_id, z_offset, should_flip_part)
+        self.pick_and_place_part(colour_part_id, z_offset)
 
         self.move_robot.move_out_of_view()
 
     def pick_and_place_part(self, part_id, z_offset, should_be_flipped=False, fuse_id=0):
-        x, y, orientation = self.get_part_location(part_id)
+        new_part_id, x, y, orientation = self.get_part_location(part_id)
         while x is None:
             print("[W]: Could not find required part in image, please move the part and try again. Part: ",
                   part_id_to_name(part_id))
             input("Press Enter to continue...")
             self.get_image()
-            x, y, orientation = self.get_part_location(part_id)
+            new_part_id, x, y, orientation = self.get_part_location(part_id)
         # print("[D]: Position: ", position, " orientation = ", orientation)
-        self.move_and_grip(x, y, orientation, part_id)
+        self.move_and_grip(x, y, orientation, new_part_id)
 
-        # self.move_robot.align(part_id, should_be_flipped)
+        self.move_robot.align()
 
+        is_facing_right = False
         if not part_id == PartEnum.FUSE.value:
             if not part_id == PartEnum.PCB.value:
                 self.move_robot.move_to_camera(is_pcb=False)
             else:
                 self.move_robot.move_to_camera(is_pcb=True)
 
-        np_image = self.vision.capture_image()
-        is_facing_right = self.vision.is_facing_right(np_image)
+            np_image = self.vision.capture_image()
+            is_facing_right = self.vision.is_facing_right(np_image)
 
         if is_facing_right:
-            self.move_robot.place(FIXTURE_X, FIXTURE_Y, z_offset, reorient=False)
+            self.move_robot.assemble(True, fuse_id)
         else:
-            self.move_robot.place(FIXTURE_X, FIXTURE_Y, z_offset, reorient=False)
+            self.move_robot.assemble(False, fuse_id)
 
     def move_and_grip(self, x, y, orientation, part_id):
         print("[I] Moving arm")

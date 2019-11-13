@@ -59,7 +59,7 @@ class Vision:
         for i in range(len(results)):
             d = results[i]
             if (d['class'] == class_id1 or d['class'] == class_id2) and d['prob'] > 0.6:
-                classify = d['class']
+                part_class = d['class']
                 prob = d['prob']
                 width = d['right'] - d['left']
                 height = d['bottom'] - d['top']
@@ -72,7 +72,8 @@ class Vision:
                 else:
                     orientation = OrientationEnum.HORIZONTAL.value
                     print("[W] Could not determine orientation, using 1 as default")
-                part = (x_coord, y_coord, orientation)
+                new_part_id = convert_to_part_id(part_class)
+                part = (new_part_id, x_coord, y_coord, orientation)
                 break
         print(part)
         return part

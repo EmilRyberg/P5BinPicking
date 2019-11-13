@@ -22,16 +22,26 @@ def convert_from_part_id(part_id):
 def convert_to_part_id(class_name):
     if class_name == 'Fuse':
         return PartEnum.FUSE.value
-    elif class_name == 'BottomCover' or class_name == 'BottomCoverFlipped':
+    elif class_name == 'BottomCover':
         return PartEnum.BACKCOVER.value
-    elif class_name == 'WhiteCover' or class_name == 'WhiteCoverFlipped':
+    elif class_name == 'BottomCoverFlipped':
+        return PartEnum.BACKCOVER_FLIPPED.value
+    elif class_name == 'WhiteCover':
         return PartEnum.WHITECOVER.value
-    elif class_name == 'BlueCover' or class_name == 'BlueCoverFlipped':
+    elif class_name == 'WhiteCoverFlipped':
+        return PartEnum.WHITECOVER_FLIPPED.value
+    elif class_name == 'BlueCover':
         return PartEnum.BLUECOVER.value
-    elif class_name == 'BlackCover' or class_name == 'BlackCoverFlipped':
+    elif class_name == 'BlueCoverFlipped':
+        return PartEnum.BLUECOVER_FLIPPED.value
+    elif class_name == 'BlackCover':
         return PartEnum.BLACKCOVER.value
-    elif class_name == 'PCB' or class_name == 'PCBFlipped':
+    elif class_name == 'BlackCoverFlipped':
+        return PartEnum.BLACKCOVER_FLIPPED.value
+    elif class_name == 'PCB':
         return PartEnum.PCB.value
+    elif class_name == 'PCBFlipped':
+        return PartEnum.PCB_FLIPPED.value
     else:
         return PartEnum.INVALID.value
 
