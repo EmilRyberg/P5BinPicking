@@ -175,7 +175,7 @@ class MoveRobot:
         self.move_to_home()
         self.current_part_id = part_id
         self.grip_has_been_called_flag = True
-        if part_id == PartEnum.PCB.value:
+        if part_id == PartEnum.PCB.value or part_id == PartEnum.PCB_FLIPPED.value:
             print("gripping PCB")
             orientation_vector = [0, 0, -1.57]
             self.move_to_home()
@@ -252,19 +252,19 @@ class MoveRobot:
         self.grip_has_been_called_flag = False
 
     def assemble(self, x=320, y=-350, z=0, flipped=0, fuse_id=0):
-        if self.current_part_id == PartEnum.BACKCOVER.value:
+        if self.current_part_id in (PartEnum.BACKCOVER.value, PartEnum.BACKCOVER_FLIPPED.value):
             self.move_to_home_l()
             self.movel([x, y, z+20, 0, 0, 0], vel=1)
             self.movel([x, y, z+0.5, 0, 0, 0], vel=0.2)
             self.open_gripper(width=20)
             self.movel([x, y, z+20, 0, 0, 0], vel=0.2)
-        if self.current_part_id == PartEnum.PCB.value:
+        elif self.current_part_id in (PartEnum.PCB.value, PartEnum.PCB_FLIPPED.value):
             self.move_to_home_l()
             self.movel([325-320+x, -353--350+y, 20+z, 0, 0, -0.24], vel=1)
             self.movel([325 - 320 + x, -353 - -350 + y, -6 + z, 0, 0, -0.24])
             self.disable_suction()
             self.movel([325 - 320 + x, -353 - -350 + y, 20 + z, 0, 0, -0.24])
-        if self.current_part_id == PartEnum.FUSE.value:
+        elif self.current_part_id == PartEnum.FUSE.value:
             self.move_to_home_l()
             if fuse_id == 0:
                 self.movel([298.4-320+x, -322--350+y, z+40, 0, 0, 3.14])
@@ -277,7 +277,7 @@ class MoveRobot:
                 self.open_gripper(width=7)
                 self.movel([306.8 - 320 + x, -330.8 - -350 + y, z + 40, 0, 0, 3.14])
             self.move_gripper(30)
-        if self.current_part_id == PartEnum.BLACKCOVER.value:
+        else: #PartEnum covers
             self.move_to_home_l()
             self.movel([x, y, z+40, 0, 0, 0])
             self.movel([x, y, z+13, 0, 0, 0])
@@ -302,7 +302,7 @@ class MoveRobot:
             self.movel(self.align_fuse_point_4, vel=0.2)
             self.close_gripper()
             self.movel(self.align_fuse_point_3, vel=0.2)
-        elif self.current_part_id == PartEnum.BACKCOVER.value or self.current_part_id == PartEnum.BLACKCOVER.value: # not flipped
+        elif self.current_part_id in (PartEnum.BACKCOVER.value, PartEnum.BLACKCOVER.value, PartEnum.BLUECOVER.value, PartEnum.WHITECOVER.value): # not flipped
             self.move_to_home_l()
             self.movej(self.align_cover_1, vel=1)
             self.movel(self.align_cover_2, vel=0.2)
@@ -315,7 +315,7 @@ class MoveRobot:
             self.movel(self.align_cover_pick_4, vel=0.2)
             self.movel(self.align_cover_pick_5, vel=0.2)
             self.movej(self.align_cover_pick_6, vel=1)
-        elif self.current_part_id == "back_flipped":
+        elif self.current_part_id in (PartEnum.BACKCOVER_FLIPPED.value, PartEnum.BLACKCOVER_FLIPPED.value, PartEnum.WHITECOVER_FLIPPED.value, PartEnum.BLUECOVER_FLIPPED.value):
             self.move_to_home_l()
             self.movej(self.align_cover_flipped_1, vel=1)
             self.movel(self.align_cover_flipped_2, vel=0.2)
@@ -329,7 +329,7 @@ class MoveRobot:
             self.movel(self.align_cover_pick_4, vel=0.2)
             self.movel(self.align_cover_pick_5, vel=0.2)
             self.movej(self.align_cover_pick_6, vel=1)
-        elif self.current_part_id == PartEnum.PCB.value: # not flipped
+        elif self.current_part_id == PartEnum.PCB.value:
             self.movej(self.align_pcb_1, vel=1)
             self.movel(self.align_pcb_2, vel=0.2)
             self.disable_suction()
@@ -339,7 +339,7 @@ class MoveRobot:
             self.enable_suction()
             self.movel(self.align_pcb_pick_2, vel=0.2)
             self.movel(self.align_pcb_pick_3, vel=0.2)
-        elif self.current_part_id == "pcb_flipped":
+        elif self.current_part_id == PartEnum.PCB_FLIPPED.value:
             self.movej(self.align_pcb_flipped_1, vel=1)
             self.movel(self.align_pcb_flipped_2, vel=0.2)
             self.disable_suction()
@@ -357,11 +357,11 @@ if __name__ == "__main__":
     print("init done")
 
     robot.move_to_home()
-    robot.grip(robot.test_back_loc[0], robot.test_back_loc[1], OrientationEnum.VERTICAL.value, PartEnum.BACKCOVER.value)
+    robot.grip(robot.test_back_loc[0], robot.test_back_loc[1], OrientationEnum.VERTICAL.value, PartEnum.BACKCOVER_FLIPPED.value)
     robot.align()
     robot.assemble()
 
-    robot.grip(robot.test_pcb_loc[0], robot.test_pcb_loc[1], OrientationEnum.VERTICAL.value, PartEnum.PCB.value)
+    robot.grip(robot.test_pcb_loc[0], robot.test_pcb_loc[1], OrientationEnum.VERTICAL.value, PartEnum.PCB_FLIPPED.value)
     robot.align()
     robot.assemble()
 
@@ -372,7 +372,7 @@ if __name__ == "__main__":
     robot.align()
     robot.assemble(fuse_id=1)
 
-    robot.grip(robot.test_top_loc[0], robot.test_top_loc[1], OrientationEnum.VERTICAL.value, PartEnum.BLACKCOVER.value)
+    robot.grip(robot.test_top_loc[0], robot.test_top_loc[1], OrientationEnum.VERTICAL.value, PartEnum.BLACKCOVER_FLIPPED.value)
     robot.align()
     robot.assemble()
 

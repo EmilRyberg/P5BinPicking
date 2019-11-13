@@ -8,6 +8,12 @@ class PartEnum(Enum):
     BLACKCOVER = 3
     WHITECOVER = 4
     BLUECOVER = 5
+    BACKCOVER_FLIPPED = 6
+    PCB_FLIPPED = 7
+    BLACKCOVER_FLIPPED = 8
+    WHITECOVER_FLIPPED = 9
+    BLUECOVER_FLIPPED = 10
+
 
 
 class OrientationEnum(Enum):
