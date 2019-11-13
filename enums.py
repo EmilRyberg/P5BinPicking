@@ -13,6 +13,7 @@ class PartEnum(Enum):
     BLACKCOVER_FLIPPED = 8
     WHITECOVER_FLIPPED = 9
     BLUECOVER_FLIPPED = 10
+    INVALID = 11
 
 
 
