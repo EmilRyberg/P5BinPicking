@@ -66,13 +66,16 @@ class Vision:
                 y_coord = height / 2 + d['top']
                 if height > width:
                     orientation = OrientationEnum.VERTICAL.value
+                    grip_width = width
                 elif width > height:
                     orientation = OrientationEnum.HORIZONTAL.value
+                    grip_width = height
                 else:
                     orientation = OrientationEnum.HORIZONTAL.value
+                    grip_width = height
                     print("[W] Could not determine orientation, using 1 as default")
                 new_part_id = convert_to_part_id(part_class)
-                part = (new_part_id, x_coord, y_coord, orientation)
+                part = (new_part_id, x_coord, y_coord, orientation, grip_width)
                 break
         print(part)
         return part
