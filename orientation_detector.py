@@ -1,6 +1,14 @@
 import tensorflow as tf
 import numpy as np
 import PIL.Image as pimg
+config = tf.ConfigProto(intra_op_parallelism_threads=4,
+                        inter_op_parallelism_threads=4,
+                        allow_soft_placement=True,
+                        device_count = {'CPU' : 1,
+                                        'GPU' : 0})
+
+session = tf.Session(config=config)
+tf.compat.v1.keras.backend.set_session(session)
 
 
 class OrientationDetector:
