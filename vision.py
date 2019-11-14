@@ -53,7 +53,7 @@ class Vision:
         results = self.detector.detect(self.image_path)
         self.draw_boxes(results)
         class_id1, class_id2 = class_id
-        part = (-1, -1, -1, -1)
+        part = (-1, -1, -1, -1, -1)
         # result is an array of dictionaries
         for i in range(len(results)):
             d = results[i]
@@ -139,7 +139,9 @@ class Vision:
         return parts_to_flip
 
     def is_facing_right(self, np_image):
-        return self.orientationCNN.is_facing_right(np_image)
+        result = self.orientationCNN.is_facing_right(np_image)
+        print("[INFO] Part is facing right. {}".format(result))
+        return result
 
     def get_image_path(self):
         return self.image_path

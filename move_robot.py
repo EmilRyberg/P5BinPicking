@@ -336,6 +336,7 @@ class MoveRobot:
             self.movej(self.align_cover_pick_7, vel=3, acc=2)
             self.movej(self.align_cover_pick_8, vel=1)
         elif self.current_part_id == PartEnum.PCB.value: #PCB
+            self.move_to_home_l()
             self.movej(self.align_pcb_1, vel=1)
             self.movel(self.align_pcb_2, vel=0.2)
             self.disable_suction()

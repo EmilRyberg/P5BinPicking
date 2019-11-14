@@ -33,6 +33,7 @@ class Controller:
 
         z_offset = 30
         self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=0)
+        self.get_image() #Take new image where previous fuse is gone
         self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=1)
 
         z_offset = 30
@@ -76,7 +77,7 @@ class Controller:
         class_names = convert_from_part_id(part_id)
         new_part_id, x, y, orientation, grip_width = self.vision.detect_object(class_names)
         if x == -1 and y == -1:
-            return None, None, None, None
+            return None, None, None, None, None
         x, y, _ = self.aruco.calibrate(self.np_image, x, y)
         if part_id == PartEnum.FUSE.value:
             fuse_in_restricted_area = self.fuse_area_check(y)
