@@ -40,16 +40,16 @@ class Controller:
 
         self.move_robot.move_out_of_view()
 
-    def pick_and_place_part(self, part_id, z_offset, should_be_flipped=False, fuse_id=0):
-        new_part_id, x, y, orientation = self.get_part_location(part_id)
+    def pick_and_place_part(self, part_id, z_offset, fuse_id=0):
+        new_part_id, x, y, orientation, grip_width = self.get_part_location(part_id)
         while x is None:
             print("[W]: Could not find required part in image, please move the part and try again. Part: ",
                   part_id_to_name(part_id))
             input("Press Enter to continue...")
             self.get_image()
-            new_part_id, x, y, orientation = self.get_part_location(part_id)
+            new_part_id, x, y, orientation, grip_width = self.get_part_location(part_id)
         # print("[D]: Position: ", position, " orientation = ", orientation)
-        self.move_and_grip(x, y, orientation, new_part_id)
+        self.move_and_grip(x, y, orientation, new_part_id, grip_width)
 
         self.move_robot.align()
 
@@ -68,13 +68,13 @@ class Controller:
         else:
             self.move_robot.assemble(rotated=False, fuse_id=fuse_id)
 
-    def move_and_grip(self, x, y, orientation, part_id):
+    def move_and_grip(self, x, y, orientation, part_id, grip_width):
         print("[I] Moving arm")
-        self.move_robot.grip(x, y, orientation, part_id)
+        self.move_robot.grip(x, y, orientation, part_id, grip_width)
 
     def get_part_location(self, part_id):
         class_names = convert_from_part_id(part_id)
-        new_part_id, x, y, orientation = self.vision.detect_object(class_names)
+        new_part_id, x, y, orientation, grip_width = self.vision.detect_object(class_names)
         if x == -1 and y == -1:
             return None, None, None, None
         x, y, _ = self.aruco.calibrate(self.np_image, x, y)
@@ -87,7 +87,7 @@ class Controller:
                 x, y, orientation = self.vision.detect_object(class_names)
                 x, y, _ = self.aruco.calibrate(self.np_image, x, y)
                 fuse_in_restricted_area = self.fuse_area_check(y)
-        return new_part_id, x, y, orientation
+        return new_part_id, x, y, orientation, grip_width
 
     def fuse_area_check(self, fuse_y):
         if fuse_y < -500:
