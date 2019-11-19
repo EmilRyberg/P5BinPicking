@@ -1,5 +1,5 @@
 from darknetpy.detector import Detector
-import pyrealsense2 as realsense
+import pyrealsense2 as rs
 from PIL import Image as pimg
 from PIL import ImageDraw
 import numpy as np
@@ -14,7 +14,7 @@ ORIENTATION_MODEL_PATH = "orientation_cnn.hdf5"
 
 class Vision:
     def __init__(self):
-        self.rs = realsense.pipeline()
+        self.rs_pipeline = rs.pipeline()
         self.current_directory = os.getcwd()
         yolo_cfg_path_absolute = self.current_directory + YOLOCFGPATH
         self.image_path = self.current_directory + "/" + IMAGE_NAME
@@ -25,22 +25,27 @@ class Vision:
 
     def __del__(self):
         # Stop streaming
-        self.rs.stop()
+        self.rs_pipeline.stop()
 
     def capture_image(self):
         if self.first_run:
-            cfg = realsense.config()
+            cfg = rs.config()
             # cfg.enable_stream(realsense.stream.depth, 1280, 720, realsense.format.z16, 30)
-            cfg.enable_stream(realsense.stream.color, 1920, 1080, realsense.format.rgb8, 30)
-            self.rs.start(cfg)
+            cfg.enable_stream(rs.stream.color, 1920, 1080, rs.format.rgb8, 30)
+
+            profile = self.rs_pipeline.start(cfg)
+            sensors = profile.get_device().query_sensors()
+            rgb_camera = sensors[1]
+            rgb_camera.set_option(rs.option.white_balance, 3000)
+
 
             frames = None
             # wait for autoexposure to catch up
             for i in range(90):
-                frames = self.rs.wait_for_frames()
+                frames = self.rs_pipeline.wait_for_frames()
             self.first_run = False
 
-        frames = self.rs.wait_for_frames()
+        frames = self.rs_pipeline.wait_for_frames()
         color_frame = frames.get_color_frame()
 
         # Convert images to numpy arrays
@@ -145,3 +150,7 @@ class Vision:
 
     def get_image_path(self):
         return self.image_path
+
+if __name__ == "__main__":
+    hey = Vision()
+    hey.capture_image()
