@@ -42,18 +42,18 @@ class MoveRobot:
         self.align_pcb_pick_2 = [362, -23, 37, 0.177, -1.1775, 1.194]  # Cartesian coordinates
         self.align_pcb_pick_3 = [336.5, -47, 67.5, 0.177, -1.1775, 1.194]  # Cartesian
 
-        self.align_cover_1 = [127.9, -74.6, 112.0, -124.1, -22.3, -27]  # joint
-        self.align_cover_2 = [573.4, -231.3, 124.0, 1.2242, -0.3126, -1.1173]  # Cartesian
+        self.align_cover_1 = [503, -95, 256, 1.101, -0.254, -1.168]  #pre pos
+        self.align_cover_2 = [492.1, -139.9, 198.7, 1.101, -0.254, -1.168]  # move into fixture
 
-        self.align_cover_flipped_1 = [3.5, -143, -45, -186, 53, 120]  # joint
-        self.align_cover_flipped_2 = [546, -265, 136.5, 3.124, 0.44, 2.146]  # Cartesian
-        self.align_cover_flipped_3 = [113, -75, 105, -83, -19, -61]
+        self.align_cover_flipped_1 = [15.84, -138.6, -54.8, -199.4, 68, 125]  # joint
+        self.align_cover_flipped_2 = [487.3, -148.3, 202.9, 3.268, 0.519, 1.612]  # Cartesian
+        self.align_cover_flipped_3 = [113, -75, 105, -83, -19, -61] # big turn
 
-        self.align_cover_pick_1 = [531, -265, 160, 1.32, -0.334, -1.13]  # Cartesian
-        self.align_cover_pick_2 = [549.6, -273.9, 92.8, 1.211, -0.298, -1.143]  # Cartesian #pre pos 1
-        self.align_cover_pick_3 = [570.4, -257.3, 81.5, 1.211, -0.298, -1.143]  # Cartesian #move into fixture
-        self.align_cover_pick_4 = [571.3, -256.8, 83.9, 1.209, -0.301, -1.138] #wiggle in fixture
-        self.align_cover_pick_5 = [548.3, -275.2, 96.5, 1.209, -0.301, -1.138] #lift from fixture
+        self.align_cover_pick_1 = [531-84.85, -265+84.85, 160, 1.32, -0.334, -1.13]  # Cartesian
+        self.align_cover_pick_2 = [546.3-84.85, -272.4+84.85, 175.1, 1.099, -0.266, -1.130]  # Cartesian #pre pos 1
+        self.align_cover_pick_3 = [571.0-84.85, -251.3+84.85, 156.8, 1.099, -0.266, -1.130]  # Cartesian #move into fixture
+        self.align_cover_pick_4 = [599.1-84.85, -272.2+84.85, 171.1, 1.099, -0.266, -1.130] #wiggle in fixture
+        self.align_cover_pick_5 = [569.1-84.85, -297.6+84.85, 193.0, 1.099, -0.266, -1.130] #lift from fixture
         self.align_cover_pick_6 = [-130, -103, 155, -180, 1, -60]
         self.align_cover_pick_7 = [-130, -100, -130, -180, 1, -60]
         self.align_cover_pick_8 = [-61, -62, -107, -100, 89, -61]  # joint
@@ -236,7 +236,7 @@ class MoveRobot:
             self.close_gripper()
             self.movel([x, y, 20] + orientation_vector, acc=1, vel=0.2)
 
-    def assemble(self, x=320, y=-350, z=0, rotated=False, fuse_id=0):
+    def assemble(self, x=327.7, y=-331.0, z=5.5, rotated=False, fuse_id=0):
         if self.moved_to_camera_flag:
             self.move_to_home()
             self.moved_to_camera_flag = False
@@ -305,61 +305,36 @@ class MoveRobot:
             self.movel(self.align_fuse_point_3, vel=0.2)
         elif self.current_part_id in (PartEnum.BACKCOVER.value, PartEnum.BLACKCOVER.value, PartEnum.BLUECOVER.value, PartEnum.WHITECOVER.value):  # covers
             self.move_to_home_l()
-            self.movej([50, -115, 85, -155, 84, 2], vel=1)
-            self.movej(self.align_cover_1, vel=1)
+            self.movel(self.align_cover_1, vel=1)
             self.movel(self.align_cover_2, vel=0.2)
             self.open_gripper(width=10)
-            self.movej(self.align_cover_1, vel=1)
-            self.movel(self.align_cover_pick_1, vel=1)
+            self.movel(self.align_cover_1, vel=1)
+            #self.movel(self.align_cover_pick_1, vel=1)
             self.movel(self.align_cover_pick_2, vel=1)
             self.movel(self.align_cover_pick_3, vel=0.2)
             self.close_gripper()
             self.movel(self.align_cover_pick_4, vel=0.2)
             self.movel(self.align_cover_pick_5, vel=0.05)
-            self.movej(self.align_cover_pick_6, vel=3, acc=3)
             self.move_to_home()
         elif self.current_part_id in (PartEnum.BACKCOVER_FLIPPED.value, PartEnum.BLACKCOVER_FLIPPED.value, PartEnum.WHITECOVER_FLIPPED.value, PartEnum.BLUECOVER_FLIPPED.value): #covers flipped
-            """
             self.move_to_home_l()
             self.movej(self.align_cover_flipped_1, vel=1)
             self.movel(self.align_cover_flipped_2, vel=0.2)
             self.open_gripper(width=10)
             self.movej(self.align_cover_flipped_1, vel=1)
-            # self.movel(self.align_cover_pick_1, vel=1)
-            self.movej(self.align_cover_flipped_3, vel=1)  # big turn
+            self.movej([7, -100, -77, -180, 67, 125], vel=1)
+            self.move_to_home()
             self.movel(self.align_cover_pick_2, vel=1)
             self.movel(self.align_cover_pick_3, vel=0.2)
             self.close_gripper()
-            """
-
-            self.move_to_home_l()
-            self.movej([50, -115, 85, -155, 84, 2], vel=1)
-            self.movej(self.align_cover_1, vel=1)
-            self.movel(self.align_cover_2, vel=0.2)
-            self.open_gripper(width=10)
-            print("[ATTENTION] Flip manually in place, then press enter")
-            input()
-            if self.current_part_id == PartEnum.BACKCOVER_FLIPPED.value:
-                self.current_part_id = PartEnum.BACKCOVER.value
-            else:
-                self.current_part_id = PartEnum.BLACKCOVER.value
-            self.movej(self.align_cover_1, vel=1)
-            self.movel(self.align_cover_pick_1, vel=1)
-            self.movel(self.align_cover_pick_2, vel=1)
-            self.movel(self.align_cover_pick_3, vel=0.2)
-            self.close_gripper()
-
-
             self.movel(self.align_cover_pick_4, vel=0.2)
             self.movel(self.align_cover_pick_5, vel=0.05)
-            self.movej(self.align_cover_pick_6, vel=3, acc=2)
             self.move_to_home()
         elif self.current_part_id == PartEnum.PCB.value: #PCB
             self.move_to_home_l()
             self.movej(self.align_pcb_1, vel=1)
             self.movel(self.align_pcb_2, vel=0.2)
             self.disable_suction()
-            # self.movel(self.align_pcb_3, vel=1)
             self.movej(self.align_pcb_4, vel=1)
             self.movej(self.align_pcb_pick_1, vel=1)
             self.enable_suction()
