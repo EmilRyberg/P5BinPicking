@@ -28,7 +28,7 @@ def create_model():
 def train_model():
     print("creating model")
     model = create_model()
-    model.load_weights("saved_models/model.01-0.0409-0.9833.hdf5")
+    model.load_weights("saved_models/model.04-0.0009-1.0000.hdf5")
 
     print("creating dataset")
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
@@ -41,18 +41,20 @@ def train_model():
     model.summary()
 
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint('saved_models/model.{epoch:02d}-{val_loss:.4f}-{val_accuracy:.4f}.hdf5',
-                                          monitor='val_accuracy', verbose=1, period=1, save_best_only=True)
+                                          monitor='val_loss', verbose=1, period=1, save_best_only=True)
 
-    history = model.fit_generator(train_generator, steps_per_epoch=train_generator.samples/BATCH_SIZE, epochs=100, validation_data=test_generator,
+    history = model.fit_generator(train_generator, steps_per_epoch=train_generator.samples/BATCH_SIZE, epochs=50, validation_data=test_generator,
                         validation_steps=test_generator.samples/BATCH_SIZE, callbacks=[checkpoint_callback])
 
+    model.save('final_model.hdf5', save_format='h5')
+
     plt.plot(history.history['acc'])
-    plt.plot(history.history['val_acc'])
+    plt.plot(history.history['val_accuracy'])
     plt.title('model accuracy')
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
-    plt.savefig('/accuracy_history.png')
+    plt.savefig('accuracy_history.png')
     plt.show()
 
     # summarize history for loss
@@ -67,9 +69,9 @@ def train_model():
 
 
 def test_model():
-    classifier = tf.keras.models.load_model("saved_models/model.72-0.0375-0.9917.hdf5")
+    classifier = tf.keras.models.load_model("saved_models/model.50-0.0000-1.0000.hdf5")
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
-    test_set = datagen.flow_from_directory("dataset/test", target_size=(224, 224), batch_size=BATCH_SIZE, class_mode="binary")
+    test_set = datagen.flow_from_directory("dataset/validation", target_size=(224, 224), batch_size=BATCH_SIZE, class_mode="binary")
 
     y_true = None
     y_predicted = None
