@@ -2,13 +2,19 @@ import pyrealsense2 as rs
 from PIL import Image as pimg
 import numpy as np
 import time
-import winsound
+#import winsound
 
 pipeline = rs.pipeline()
 cfg = rs.config()
 cfg.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
 cfg.enable_stream(rs.stream.color, 1920, 1080, rs.format.rgb8, 30)
 profile = pipeline.start(cfg)
+sensors = profile.get_device().query_sensors()
+rgb_camera = sensors[1]
+rgb_camera.set_option(rs.option.white_balance, 4600)
+rgb_camera.set_option(rs.option.exposure, 156)
+rgb_camera.set_option(rs.option.saturation, 64)
+rgb_camera.set_option(rs.option.contrast, 50)
 
 try:
 
@@ -23,8 +29,9 @@ try:
 
         frequency = 440  # Set Frequency To 2500 Hertz
         duration = 500  # Set Duration To 1000 ms == 1 second
-        winsound.Beep(frequency, duration)
+        #winsound.Beep(frequency, duration)
         # Convert images to numpy arrays
+        print("Done taking image")
         depth_image = np.asanyarray(depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
 
