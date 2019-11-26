@@ -24,6 +24,7 @@ class Controller:
 
     def main_flow(self, colour_part_id):
         self.get_image()
+        self.vision.detect_object()
 
         z_offset = 0
         self.pick_and_place_part(PartEnum.BACKCOVER.value, z_offset)
@@ -34,6 +35,7 @@ class Controller:
         z_offset = 30
         self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=0)
         self.get_image() #Take new image where previous fuse is gone
+        self.vision.detect_object()
         self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=1)
 
         z_offset = 30
@@ -48,6 +50,7 @@ class Controller:
                   part_id_to_name(part_id))
             input("Press Enter to continue...")
             self.get_image()
+            self.vision.detect_object()
             new_part_id, x, y, orientation, grip_width = self.get_part_location(part_id)
         # print("[D]: Position: ", position, " orientation = ", orientation)
         self.move_and_grip(x, y, orientation, new_part_id, grip_width)
@@ -65,9 +68,15 @@ class Controller:
             is_facing_right = self.vision.is_facing_right(np_image)
 
         if is_facing_right:
-            self.move_robot.assemble(rotated=True, fuse_id=fuse_id)
+            if part_id == PartEnum.PCB.value:
+                self.move_robot.assemble(rotated=True, fuse_id=fuse_id)
+            else:
+                self.move_robot.assemble(rotated=False, fuse_id=fuse_id)
         else:
-            self.move_robot.assemble(rotated=False, fuse_id=fuse_id)
+            if part_id == PartEnum.PCB.value:
+                self.move_robot.assemble(rotated=False, fuse_id=fuse_id)
+            else:
+                self.move_robot.assemble(rotated=True, fuse_id=fuse_id)
 
     def move_and_grip(self, x, y, orientation, part_id, grip_width):
         print("[I] Moving arm")
@@ -75,7 +84,7 @@ class Controller:
 
     def get_part_location(self, part_id):
         class_names = convert_from_part_id(part_id)
-        new_part_id, x, y, orientation, grip_width = self.vision.detect_object(class_names)
+        new_part_id, x, y, orientation, grip_width = self.vision.find_parts(class_names)
         if x == -1 and y == -1:
             return None, None, None, None, None
         x, y, _ = self.aruco.calibrate(self.np_image, x, y)
@@ -85,7 +94,8 @@ class Controller:
                 print("[W]: Fuse found in restricted area, y =", y, " please move the fuse closer to the robot")
                 input("Press Enter to continue...")
                 self.get_image()
-                x, y, orientation = self.vision.detect_object(class_names)
+                self.vision.detect_object()
+                x, y, orientation = self.vision.find_parts(class_names)
                 x, y, _ = self.aruco.calibrate(self.np_image, x, y)
                 fuse_in_restricted_area = self.fuse_area_check(y)
         return new_part_id, x, y, orientation, grip_width

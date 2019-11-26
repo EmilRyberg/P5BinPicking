@@ -122,9 +122,9 @@ class MoveRobot:
         self.robot.close()
         print("[INFO] Safely stopped robot and gripper")
 
-    def getl(self):
-        temp = self.robot.getl()
-        return [temp[0] * 1000, temp[1] * 1000, temp[2] * 1000, temp[3], temp[4], temp[5]]
+#    def getl(self):
+#        temp = self.robot.getl()
+#        return [temp[0] * 1000, temp[1] * 1000, temp[2] * 1000, temp[3], temp[4], temp[5]]
 
     def movel(self, pose, acc=1.0, vel=0.2, wait=True, relative=False):
         pose_local = pose.copy()
@@ -186,6 +186,8 @@ class MoveRobot:
         self.robot.set_digital_out(self.suction_enable_pin, False)
 
     def grip(self, x, y, orientation, part_id, width=50):  # 0 = part horizontal, 1 = part vertical
+        if width > 110:
+            width = 110
         self.move_gripper(width)
         self.move_to_home()
         self.current_part_id = part_id
@@ -254,7 +256,7 @@ class MoveRobot:
             self.move_to_home_l()
             rotated_x_offset = 0
             rotated_y_offset = 0
-            if rotated:
+            if not rotated:
                 angle = 3.14
                 self.movej(self.pcb_singularity_avoidance,vel=2)
                 rotated_x_offset = -8
@@ -288,7 +290,7 @@ class MoveRobot:
             self.movel([x, y, z + 13, 0, 0, angle])
             self.open_gripper(width=20)
             self.movel([x, y, z + 40, 0, 0, angle])
-            self.movel([x, y, z + 40, 0, 0, 1.57], vel=0.2, wait=False)
+            self.movel([x, y, z + 40, 0, 0, 1.57], vel=0.2, wait=1)
             self.close_gripper()
             self.movel([x, y, z + 19, 0, 0, 1.57], vel=0.05)
             self.movel([x, y, z + 40, 0, 0, 1.57])
@@ -307,7 +309,7 @@ class MoveRobot:
             self.movel(self.align_fuse_point_4, vel=0.2)
             self.close_gripper()
             self.movel(self.align_fuse_point_3, vel=0.2)
-        elif self.current_part_id in (PartEnum.BACKCOVER.value, PartEnum.BLACKCOVER.value, PartEnum.BLUECOVER.value, PartEnum.WHITECOVER.value):  # covers
+        elif self.current_part_id in (PartEnum.BACKCOVER.value, PartEnum.BLACKCOVER_FLIPPED.value, PartEnum.WHITECOVER_FLIPPED.value, PartEnum.BLUECOVER_FLIPPED.value):  # covers
             self.move_to_home_l()
             self.movel(self.align_cover_1, vel=1)
             self.movel(self.align_cover_2, vel=0.2)
@@ -320,7 +322,7 @@ class MoveRobot:
             self.movel(self.align_cover_pick_4, vel=0.2)
             self.movel(self.align_cover_pick_5, vel=0.05)
             self.move_to_home()
-        elif self.current_part_id in (PartEnum.BACKCOVER_FLIPPED.value, PartEnum.BLACKCOVER_FLIPPED.value, PartEnum.WHITECOVER_FLIPPED.value, PartEnum.BLUECOVER_FLIPPED.value): #covers flipped
+        elif self.current_part_id in (PartEnum.BACKCOVER_FLIPPED.value, PartEnum.BLACKCOVER.value, PartEnum.BLUECOVER.value, PartEnum.WHITECOVER.value): #covers flipped
             self.move_to_home_l()
             self.movej(self.align_cover_flipped_1, vel=1)
             self.movel(self.align_cover_flipped_2, vel=0.2)
@@ -372,13 +374,13 @@ if __name__ == "__main__":
     robot.assemble()
     
 
-    robot.grip(robot.test_pcb_loc[0], robot.test_pcb_loc[1], OrientationEnum.VERTICAL.value, PartEnum.PCB.value)
+    robot.grip(robot.test_pcb_loc[0], robot.test_pcb_loc[1], OrientationEnum.VERTICAL.value, PartEnum.PCB.value, 45)
     robot.align()
     #robot.move_to_camera(is_pcb=True)
     robot.assemble(rotated=False)
     """
 
-    robot.grip(robot.test_fuse_1_loc[0], robot.test_fuse_1_loc[1], OrientationEnum.VERTICAL.value, PartEnum.FUSE.value)
+    robot.grip(robot.test_fuse_1_loc[0], robot.test_fuse_1_loc[1], OrientationEnum.VERTICAL.value, PartEnum.FUSE.value, 30)
     robot.align()
     robot.assemble(fuse_id=0)
 
@@ -392,5 +394,7 @@ if __name__ == "__main__":
     robot.assemble()
 
     robot.move_to_home_l()
+
+    robot.move_to_camera(is_pcb=True)
 
     robot.stop_all()
