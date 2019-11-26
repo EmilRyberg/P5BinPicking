@@ -236,7 +236,7 @@ class MoveRobot:
             self.close_gripper()
             self.movel([x, y, 20] + orientation_vector, acc=1, vel=0.2)
 
-    def assemble(self, x=327.7, y=-331.0, z=5.5, rotated=False, fuse_id=0):
+    def assemble(self, x=327.7, y=-331.0, z=3, rotated=False, fuse_id=0):
         if self.moved_to_camera_flag:
             self.move_to_home()
             self.moved_to_camera_flag = False
@@ -252,27 +252,31 @@ class MoveRobot:
             self.movel([x, y, z + 20, 0, 0, angle], vel=0.2)
         elif self.current_part_id in (PartEnum.PCB.value, PartEnum.PCB_FLIPPED.value): #PCB
             self.move_to_home_l()
+            rotated_x_offset = 0
+            rotated_y_offset = 0
             if rotated:
                 angle = 3.14
                 self.movej(self.pcb_singularity_avoidance,vel=2)
+                rotated_x_offset = -8
+                rotated_y_offset = -2
             else:
                 angle = 0
-            self.movel([325 - 320 + x, -353 - -350 + y, 20 + z, 0, 0, -0.24 + angle], vel=1)
-            self.movel([325 - 320 + x, -353 - -350 + y, -6 + z, 0, 0, -0.24 + angle])
+            self.movel([3.3 + x + rotated_x_offset, 1 + y + rotated_y_offset, 20 + z, 0, 0, -0.25 + angle], vel=1)
+            self.movel([3.3 + x + rotated_x_offset, 1 + y + rotated_y_offset, -6 + z, 0, 0, -0.25 + angle])
             self.disable_suction()
-            self.movel([325 - 320 + x, -353 - -350 + y, 20 + z, 0, 0, -0.24 + angle])
+            self.movel([3.3 + x + rotated_x_offset, 8 + y, 20 + z, 0, 0, -0.25 + angle])
         elif self.current_part_id == PartEnum.FUSE.value: #Fuses
             self.move_to_home_l()
             if fuse_id == 0:
-                self.movel([298.4 - 320 + x, -322 - -350 + y, z + 40, 0, 0, 3.14])
-                self.movel([298.4 - 320 + x, -322 - -350 + y, z + 11, 0, 0, 3.14], vel=0.05)
+                self.movel([-22.9 + x, 30.5 + y, z + 40, 0, 0, 3.14])  #306.1, -303 -> 304.8, -300.5     -1.3, +2.5
+                self.movel([-22.9 + x, 30.5 + y, z + 11, 0, 0, 3.14], vel=0.05)
                 self.open_gripper(width=7)
-                self.movel([298.4 - 320 + x, -322 - -350 + y, z + 40, 0, 0, 3.14])
+                self.movel([-22.9 + x, 30.5 + y, z + 40, 0, 0, 3.14])
             else:
-                self.movel([306.8 - 320 + x, -330.8 - -350 + y, z + 40, 0, 0, 3.14])
-                self.movel([306.8 - 320 + x, -330.8 - -350 + y, z + 11, 0, 0, 3.14], vel=0.05)
+                self.movel([-14.5 + x, 21.7 + y, z + 40, 0, 0, 3.14]) #314.5, -311.8 -> 313.2, -309.3
+                self.movel([-14.5 + x, 21.7 + y, z + 11, 0, 0, 3.14], vel=0.05)
                 self.open_gripper(width=7)
-                self.movel([306.8 - 320 + x, -330.8 - -350 + y, z + 40, 0, 0, 3.14])
+                self.movel([-14.5 + x, 21.7 + y, z + 40, 0, 0, 3.14])
             self.move_gripper(30)
         else:  # top covers
             self.move_to_home_l()
@@ -361,24 +365,27 @@ if __name__ == "__main__":
     print("init done")
 
     robot.move_to_home()
+    """
     robot.grip(robot.test_back_loc[0], robot.test_back_loc[1], OrientationEnum.VERTICAL.value, PartEnum.BACKCOVER.value)
     robot.align()
     #robot.move_to_camera()
     robot.assemble()
+    
 
     robot.grip(robot.test_pcb_loc[0], robot.test_pcb_loc[1], OrientationEnum.VERTICAL.value, PartEnum.PCB.value)
     robot.align()
     #robot.move_to_camera(is_pcb=True)
-    robot.assemble()
+    robot.assemble(rotated=False)
+    """
 
     robot.grip(robot.test_fuse_1_loc[0], robot.test_fuse_1_loc[1], OrientationEnum.VERTICAL.value, PartEnum.FUSE.value)
     robot.align()
     robot.assemble(fuse_id=0)
-    """
+
     robot.grip(robot.test_fuse_2_loc[0], robot.test_fuse_2_loc[1], OrientationEnum.VERTICAL.value, PartEnum.FUSE.value)
     robot.align()
     robot.assemble(fuse_id=1)
-    """
+
 
     robot.grip(robot.test_top_loc[0], robot.test_top_loc[1], OrientationEnum.VERTICAL.value, PartEnum.BLACKCOVER_FLIPPED.value)
     robot.align()
