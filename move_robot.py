@@ -360,14 +360,19 @@ class MoveRobot:
             print("[FATAL] invalid part id")
             self.stop_all()
 
+    def set_speed(self, speed):
+        self.robot.send_program("set speed {}".format(speed*0.01))
+
 
 if __name__ == "__main__":
     robot = MoveRobot("192.168.1.148")
     time.sleep(1)
     print("init done")
 
+    robot.set_speed(0.1)
     robot.move_to_home()
-    """
+    robot.set_speed(0.2)
+
     robot.grip(robot.test_back_loc[0], robot.test_back_loc[1], OrientationEnum.VERTICAL.value, PartEnum.BACKCOVER.value)
     robot.align()
     #robot.move_to_camera()
@@ -378,7 +383,7 @@ if __name__ == "__main__":
     robot.align()
     #robot.move_to_camera(is_pcb=True)
     robot.assemble(rotated=False)
-    """
+
 
     robot.grip(robot.test_fuse_1_loc[0], robot.test_fuse_1_loc[1], OrientationEnum.VERTICAL.value, PartEnum.FUSE.value, 30)
     robot.align()
