@@ -35,7 +35,7 @@ class AutoLabeler:
             for result in results:
                 if result["prob"] < 0.6:
                     continue
-                c = [label for label in self.class_list if label == result["class"]][0]
+                c = [index for index, label in enumerate(self.class_list) if label == result["class"]][0]
                 width = result["right"] - result["left"]
                 height = result["bottom"] - result["top"]
                 x_coord = width / 2 + result["left"]
