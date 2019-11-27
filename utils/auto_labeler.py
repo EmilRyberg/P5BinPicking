@@ -4,7 +4,6 @@ import glob
 from PIL import Image
 import numpy as np
 
-
 YOLOCFGPATH = "/DarkNet/"
 IMAGES_TO_LABEL_GLOB = "images/*"
 LABEL_PATH = "labels"
@@ -14,18 +13,20 @@ class AutoLabeler:
     def __init__(self):
         self.current_directory = os.getcwd()
         yolo_cfg_path_absolute = self.current_directory + YOLOCFGPATH
-        self.detector = Detector(yolo_cfg_path_absolute + 'cfg/obj.data', yolo_cfg_path_absolute + 'cfg/yolov3-tiny.cfg', yolo_cfg_path_absolute + 'yolov3-tiny_final.weights')
+        self.detector = Detector(yolo_cfg_path_absolute + 'cfg/obj.data',
+                                 yolo_cfg_path_absolute + 'cfg/yolov3-tiny.cfg',
+                                 yolo_cfg_path_absolute + 'yolov3-tiny_final.weights')
         if not os.path.isdir(LABEL_PATH):
             os.mkdir(LABEL_PATH)
 
     def label_images(self):
-        files_to_label = glob(IMAGES_TO_LABEL_GLOB)
+        files_to_label = glob.glob(IMAGES_TO_LABEL_GLOB)
         number_of_files = len(files_to_label)
         print(f"{number_of_files} to label in total")
         for index, file_path in enumerate(files_to_label):
             image = Image.open(file_path)
             label_matrix = []
-            print(f"Labeling {index+1}/{number_of_files}")
+            print(f"Labeling {index + 1}/{number_of_files}")
             results = self.detector.detect(file_path)
             is_first = True
             for result in results:
@@ -45,8 +46,12 @@ class AutoLabeler:
             label_matrix_np = np.array(label_matrix)
             base_label_file_name = os.path.basename(file_path)[:os.path.basename(file_path).rfind('.')] + ".txt"
             label_file_name = f"{LABEL_PATH}/{base_label_file_name}"
-            np.savetxt(label_file_name, label_matrix_np)
+            np.savetxt(label_file_name, label_matrix_np, fmt="%s")
             print(f"Saving file as {label_file_name}")
-    
+
+
+if __name__ == "__main__":
+    instance = AutoLabeler()
+    instance.label_images()
 
 
