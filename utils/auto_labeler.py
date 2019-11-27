@@ -51,7 +51,7 @@ class AutoLabeler:
             label_file_name = f"{LABEL_PATH}/{base_label_file_name}"
             np.savetxt(label_file_name, label_matrix_np)
             time_elapsed = time.time() - start_time
-            estimated_time_remaining = (time_elapsed / (index + 1)) * (len(files_to_label) - (index + 1)) / (1000 * 60)
+            estimated_time_remaining = ((time_elapsed / (index + 1)) * (len(files_to_label) - (index + 1))) / 60
             print(f"Saving file as {label_file_name} -- Est {estimated_time_remaining:.2f} mins remaining")
 
 
