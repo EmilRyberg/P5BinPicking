@@ -8,10 +8,9 @@ if __name__ == "__main__":
     quit_program = False
     person_close = False
 
-    person_close = threading.Thread(target=laser_scanner.check_distances())
-    if person_close:
-        print("Human entered danger zone, stopping system")
-        exit(1)
+    laser_thread = threading.Thread(target=laser_scanner.check_distances, args=(controller, 0), daemon=True)
+    laser_thread.start()
+
     while not quit_program:
         quit_program = controller.choose_action()
 

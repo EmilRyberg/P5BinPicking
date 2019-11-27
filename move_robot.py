@@ -188,6 +188,8 @@ class MoveRobot:
     def grip(self, x, y, orientation, part_id, width=50):  # 0 = part horizontal, 1 = part vertical
         if width > 110:
             width = 110
+        if width < 50:
+            width = 50
         self.move_gripper(width)
         self.move_to_home()
         self.current_part_id = part_id
@@ -292,7 +294,7 @@ class MoveRobot:
             self.movel([x, y, z + 40, 0, 0, angle])
             self.movel([x, y, z + 40, 0, 0, 1.57], vel=0.2, wait=1)
             self.close_gripper()
-            self.movel([x, y, z + 19, 0, 0, 1.57], vel=0.05)
+            self.movel([x, y, z + 19, 0, 0, 1.57], vel=3, acc=10)
             self.movel([x, y, z + 40, 0, 0, 1.57])
             self.open_gripper()
 
