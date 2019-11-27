@@ -3,6 +3,7 @@ import os
 import glob
 from PIL import Image
 import numpy as np
+import time
 
 YOLOCFGPATH = "/DarkNet/"
 IMAGES_TO_LABEL_GLOB = "images/*"
@@ -12,6 +13,7 @@ LABEL_PATH = "labels"
 class AutoLabeler:
     def __init__(self):
         self.current_directory = os.getcwd()
+        self.class_list = np.loadtxt("class_list.txt", dtype=np.str)
         yolo_cfg_path_absolute = self.current_directory + YOLOCFGPATH
         self.detector = Detector(yolo_cfg_path_absolute + 'cfg/obj.data',
                                  yolo_cfg_path_absolute + 'cfg/yolov3-tiny.cfg',
@@ -23,6 +25,7 @@ class AutoLabeler:
         files_to_label = glob.glob(IMAGES_TO_LABEL_GLOB)
         number_of_files = len(files_to_label)
         print(f"{number_of_files} to label in total")
+        start_time = time.time()
         for index, file_path in enumerate(files_to_label):
             image = Image.open(file_path)
             label_matrix = []
@@ -32,7 +35,7 @@ class AutoLabeler:
             for result in results:
                 if result["prob"] < 0.6:
                     continue
-                c = result["class"]
+                c = [label for label in self.class_list if label == result["class"]][0]
                 width = result["right"] - result["left"]
                 height = result["bottom"] - result["top"]
                 x_coord = width / 2 + result["left"]
@@ -46,8 +49,10 @@ class AutoLabeler:
             label_matrix_np = np.array(label_matrix)
             base_label_file_name = os.path.basename(file_path)[:os.path.basename(file_path).rfind('.')] + ".txt"
             label_file_name = f"{LABEL_PATH}/{base_label_file_name}"
-            np.savetxt(label_file_name, label_matrix_np, fmt="%s")
-            print(f"Saving file as {label_file_name}")
+            np.savetxt(label_file_name, label_matrix_np)
+            time_elapsed = time.time() - start_time
+            estimated_time_remaining = (time_elapsed / (index + 1)) * (len(files_to_label) - (index + 1)) / (1000 * 60)
+            print(f"Saving file as {label_file_name} -- Est {estimated_time_remaining:.2f} mins remaining")
 
 
 if __name__ == "__main__":
