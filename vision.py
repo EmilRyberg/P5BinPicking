@@ -38,7 +38,7 @@ class Vision:
             sensors = profile.get_device().query_sensors()
             rgb_camera = sensors[1]
             rgb_camera.set_option(rs.option.white_balance, 4600)
-            rgb_camera.set_option(rs.option.exposure, 100)
+            rgb_camera.set_option(rs.option.exposure, 80)
             #rgb_camera.set_option(rs.option.saturation, 65)
             #rgb_camera.set_option(rs.option.contrast, 50)
 

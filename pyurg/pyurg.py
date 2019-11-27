@@ -34,7 +34,7 @@ class UrgDevice(serial.Serial):
     def __del__(self):
         self.laser_off()
 
-    def connect(self, port = '/dev/tty.usbmodem14101', baudrate = 9600, timeout = 0.1):
+    def connect(self, port = '/dev/ttyACM0', baudrate = 9600, timeout = 0.1):
         '''
         Connect to URG device
         port      : Port or device name. ex:/dev/ttyACM0, COM1, etc...
@@ -53,7 +53,9 @@ class UrgDevice(serial.Serial):
             return False
 
         self.set_scip2()
-        self.get_parameter()
+        for i in range(100):
+            if self.get_parameter():
+                break
         return True
 
     def flush_input_buf(self):
@@ -75,11 +77,6 @@ class UrgDevice(serial.Serial):
         self.send_command('SCIP2.0\n')
         return self.__receive_data()
 
-    def get_version(self):
-        '''Get version information.'''
-        if not self.isOpen():
-            return False
-
         self.flush_input_buf()
         self.send_command('VV\n')
         get = self.__receive_data()
@@ -96,6 +93,7 @@ class UrgDevice(serial.Serial):
         
         # check expected value
         if not (get[:2] == ['PP\n', '00P\n']):
+            print("Parameter error in get_parameter", get)
             return False
         
         # pick received data out of parameters
