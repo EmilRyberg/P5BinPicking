@@ -1,15 +1,14 @@
 from controller import Controller
-from laser_scanner import LaserScanner
+from safety import Safety
 import threading
 
 if __name__ == "__main__":
     controller = Controller()
-    laser_scanner = LaserScanner()
+    safety_control = Safety()
     quit_program = False
-    person_close = False
 
-    laser_thread = threading.Thread(target=laser_scanner.check_distances, args=(controller, 0), daemon=True)
-    laser_thread.start()
+    safety_thread = threading.Thread(target=safety_control.check_distances, args=(controller, 0), daemon=True)
+    safety_thread.start()
 
     while not quit_program:
         quit_program = controller.choose_action()

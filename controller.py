@@ -26,17 +26,17 @@ class Controller:
         self.get_image()
         self.vision.detect_object()
 
-        z_offset = 0
-        self.pick_and_place_part(PartEnum.BACKCOVER.value, z_offset)
+        #z_offset = 0
+        #self.pick_and_place_part(PartEnum.BACKCOVER.value, z_offset)
 
-        z_offset = 20
-        self.pick_and_place_part(PartEnum.PCB.value, z_offset)
+        #z_offset = 20
+        #self.pick_and_place_part(PartEnum.PCB.value, z_offset)
 
-        z_offset = 30
-        self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=0)
-        self.get_image() #Take new image where previous fuse is gone
-        self.vision.detect_object()
-        self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=1)
+        #z_offset = 30
+        #self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=0)
+        #self.get_image() #Take new image where previous fuse is gone
+        #self.vision.detect_object()
+        #self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=1)
 
         z_offset = 30
         self.pick_and_place_part(colour_part_id, z_offset)

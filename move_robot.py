@@ -11,6 +11,7 @@ GRIPPER_PORT = 1000
 class MoveRobot:
     def __init__(self, ip):
         self.suction_enable_pin = 6
+        self.led_light_enable_pin = 4
         self.home_pose_l = [35, -300, 300, 0, 0, -0.8]
         self.home_pose = [-60, -60, -110, -100, 90, -60]
         # self.move_out_of_view_pose = [-350, -35, 300, 3.14, 0, 0]
@@ -184,6 +185,20 @@ class MoveRobot:
 
     def disable_suction(self):
         self.robot.set_digital_out(self.suction_enable_pin, False)
+
+    def turn_on_led(self):
+        self.robot.set_digital_out(self.led_light_enable_pin, True)
+
+    def flash_led(self):
+        while True:
+            self.robot.set_digital_out(self.led_light_enable_pin, True)
+            time.sleep(1)
+            self.robot.set_digital_out(self.led_light_enable_pin, False)
+            time.sleep(1)
+
+
+    def turn_off_led(self):
+        self.robot.set_digital_out(self.led_light_enable_pin, False)
 
     def grip(self, x, y, orientation, part_id, width=50):  # 0 = part horizontal, 1 = part vertical
         if width > 110:
