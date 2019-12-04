@@ -159,4 +159,7 @@ class Vision:
 
 if __name__ == "__main__":
     hey = Vision()
-    hey.capture_image()
+    while True:
+        hey.capture_image()
+        hey.detect_object()
+        input()

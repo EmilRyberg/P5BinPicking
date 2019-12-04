@@ -1,7 +1,6 @@
 from pyurg import pyurg
 import threading
 
-
 STOP_THRESHOLD_LOW = 100
 STOP_THRESHOLD_HIGH = 500
 SLOW_THRESHOLD_LOW = 500
@@ -21,12 +20,13 @@ class Safety:
             print('Could not connect to laser scanner.')
             exit(0)
 
-        #Getting reference values to ignore
+        # Getting reference values to ignore
         data, timestamp = self.scanner.capture()
         for i in range(len(data)):
             if i == len(data) - 3:
                 break
-            elif STOP_THRESHOLD_LOW < data[i] < SLOW_THRESHOLD_HIGH and STOP_THRESHOLD_LOW < data[i + 1] < SLOW_THRESHOLD_HIGH and STOP_THRESHOLD_LOW < data[i + 2] < SLOW_THRESHOLD_HIGH:
+            elif STOP_THRESHOLD_LOW < data[i] < SLOW_THRESHOLD_HIGH and STOP_THRESHOLD_LOW < data[
+                i + 1] < SLOW_THRESHOLD_HIGH and STOP_THRESHOLD_LOW < data[i + 2] < SLOW_THRESHOLD_HIGH:
                 self.ignore_indexes.append(i)
 
     def check_distances(self, controller, x):
@@ -38,44 +38,48 @@ class Safety:
                 exit(0)
             else:
                 for i in range(len(data)):
-                    if i == len(data)-3:
+                    if i == len(data) - 3:
                         break
-                    elif i in self.ignore_indexes or i+1 in self.ignore_indexes or i-1 in self.ignore_indexes:
+                    elif i in self.ignore_indexes or i + 1 in self.ignore_indexes or i - 1 in self.ignore_indexes:
                         continue
-                    elif STOP_THRESHOLD_LOW < data[i] < STOP_THRESHOLD_HIGH and STOP_THRESHOLD_LOW < data[i+1] < STOP_THRESHOLD_HIGH and STOP_THRESHOLD_LOW < data[i+2] < STOP_THRESHOLD_HIGH:
-                        self.person_close_counter = self.person_close_counter+1
+                    elif STOP_THRESHOLD_LOW < data[i] < STOP_THRESHOLD_HIGH and STOP_THRESHOLD_LOW < data[
+                        i + 1] < STOP_THRESHOLD_HIGH and STOP_THRESHOLD_LOW < data[i + 2] < STOP_THRESHOLD_HIGH:
+                        self.person_close_counter = self.person_close_counter + 1
 
-                    if i == len(data)-3:
+                    if i == len(data) - 3:
                         break
-                    elif i in self.ignore_indexes or i+1 in self.ignore_indexes or i-1 in self.ignore_indexes:
+                    elif i in self.ignore_indexes or i + 1 in self.ignore_indexes or i - 1 in self.ignore_indexes:
                         continue
-                    elif SLOW_THRESHOLD_LOW < data[i] < SLOW_THRESHOLD_HIGH and SLOW_THRESHOLD_LOW < data[i+1] < SLOW_THRESHOLD_HIGH and SLOW_THRESHOLD_LOW < data[i+2] < SLOW_THRESHOLD_HIGH:
-                        self.person_approaching_counter = self.person_approaching_counter+1
+                    elif SLOW_THRESHOLD_LOW < data[i] < SLOW_THRESHOLD_HIGH and SLOW_THRESHOLD_LOW < data[
+                        i + 1] < SLOW_THRESHOLD_HIGH and SLOW_THRESHOLD_LOW < data[i + 2] < SLOW_THRESHOLD_HIGH:
+                        self.person_approaching_counter = self.person_approaching_counter + 1
 
-                if self.person_close_counter > 2: #To avoid environmental noise from stopping the robot
+                if self.person_close_counter > 4:  # To avoid environmental noise from stopping the robot
                     self.person_close = True
                     print("Warning: person close, stopping robot")
                     controller.move_robot.set_speed(0.5)
                     if self.led_thread_running:
-                        led_flash_thread.join()
+                        #led_flash_thread.join()
                         self.led_thread_running = False
-                    controller.move_robot.turn_on_led()
+                    #controller.move_robot.turn_on_led()
                     self.person_close_counter = 0
-                elif self.person_approaching_counter > 2:  # To avoid environmental noise from stopping the robot
+                elif self.person_approaching_counter > 4:  # To avoid environmental noise from slowing the robot
                     self.person_approaching = True
-                    print("Warning: person close, stopping robot")
+                    print("Warning: person close, slowing down robot")
                     controller.move_robot.set_speed(50)
-                    led_flash_thread.start()
+                    if self.led_thread_running == False:
+                        #led_flash_thread.start()
+                        print("Led thread has been started")
+                        self.led_thread_running = True
                     self.person_approaching_counter = 0
-                elif self.person_close_counter < 2 and self.person_approaching_counter < 2:
+                elif self.person_close_counter < 5 and self.person_approaching_counter < 5:
                     self.person_close = False
                     self.person_approaching = False
                     if self.led_thread_running:
-                        led_flash_thread.join()
+                        #led_flash_thread.join()
                         self.led_thread_running = False
-                    controller.move_robot.turn_off_led()
+                    #controller.move_robot.turn_off_led()
                     controller.move_robot.set_speed(100)
-
 
 
 if __name__ == "__main__":
