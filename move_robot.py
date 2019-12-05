@@ -347,6 +347,7 @@ class MoveRobot:
             self.movel(self.align_pcb_pick_2, vel=0.2)
             self.movel(self.align_pcb_pick_3, vel=0.2)
         elif self.current_part_id == PartEnum.PCB_FLIPPED.value: #PCB flipped
+            self.move_to_home_l()
             self.movej(self.align_pcb_flipped_1, vel=1)
             self.movel(self.align_pcb_flipped_2, vel=0.2)
             self.disable_suction()
