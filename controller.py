@@ -94,7 +94,7 @@ class Controller:
                 input("Press Enter to continue...")
                 self.get_image()
                 self.vision.detect_object()
-                x, y, orientation = self.vision.find_parts(class_names)  # dont use fuse index here
+                new_part_id, x, y, orientation, grip_width = self.vision.find_parts(class_names)  # dont use fuse index here
                 x, y, _ = self.aruco.calibrate(self.np_image, x, y)
                 fuse_in_restricted_area = self.fuse_area_check(y)
         return new_part_id, x, y, orientation, grip_width
