@@ -31,11 +31,20 @@ class Safety:
         # Getting reference values to ignore
         data, timestamp = self.scanner.capture()
         for i in range(len(data)):
-            if i == len(data) - 10:
+            if i == 0:
+                continue
+            elif i == len(data) - 2:
                 break
-            elif STOP_THRESHOLD_LOW < data[i] < SLOW_THRESHOLD_HIGH and STOP_THRESHOLD_LOW < data[
-                i + 1] < SLOW_THRESHOLD_HIGH and STOP_THRESHOLD_LOW < data[i + 2] < SLOW_THRESHOLD_HIGH:
-                self.ignore_indexes.append(i)
+            elif STOP_THRESHOLD_LOW < data[i - 1] < SLOW_THRESHOLD_HIGH \
+                    and STOP_THRESHOLD_LOW < data[i] < SLOW_THRESHOLD_HIGH \
+                    and STOP_THRESHOLD_LOW < data[i + 1] < SLOW_THRESHOLD_HIGH:
+                self.add_to_ignore_index_if_not_exist(i)
+                self.add_to_ignore_index_if_not_exist(i - 1)
+                self.add_to_ignore_index_if_not_exist(i + 1)
+
+    def add_to_ignore_index_if_not_exist(self, index):
+        if index not in self.ignore_indexes:
+            self.ignore_indexes.append(index)
 
     def check_distances(self, controller, x):
         while True:
@@ -46,7 +55,6 @@ class Safety:
                 print('Could not get laser scanner data: slowing down and attempting reconnect')
                 controller.move_robot.set_speed(0.5)
                 for i in range(5):
-                    self.scanner.connect()
                     if not self.scanner.connect():
                         print('Could not reconnect to laser scanner, attempt number: ', i)
                     else:
@@ -57,35 +65,38 @@ class Safety:
                     controller.move_robot.stop_all()
             else:
                 for i in range(len(data)):
-                    if i == len(data) - 10:
-                        break
-                    elif i in self.ignore_indexes or i + 1 in self.ignore_indexes or i - 1 in self.ignore_indexes:
+                    if i < 5:
                         continue
-                    elif STOP_THRESHOLD_LOW < data[i] < STOP_THRESHOLD_HIGH:
-                        for x in range(10):
-                            if STOP_THRESHOLD_LOW < data[i] < STOP_THRESHOLD_HIGH:
-                                self.stop_counter = self.stop_counter+1
-                                i = i+1
-                                if self.stop_counter > 9:
-                                    self.person_close_counter = self.person_close_counter+1
-                            else:
-                                self.stop_counter = 0
-                                continue
+                    elif i == len(data) - 7:
+                        break
 
-                    if i == len(data) - 10:
-                        break
-                    elif i in self.ignore_indexes or i + 1 in self.ignore_indexes or i - 1 in self.ignore_indexes:
+                    skip_iteration = False
+                    for x in range(-5, 6):
+                        if i + x in self.ignore_indexes:
+                            skip_iteration = True
+                            break
+
+                    if skip_iteration:
                         continue
-                    elif SLOW_THRESHOLD_LOW < data[i] < SLOW_THRESHOLD_HIGH:
-                        for x in range(10):
-                            if SLOW_THRESHOLD_LOW < data[i] < SLOW_THRESHOLD_HIGH:
-                                self.slow_counter = self.slow_counter+1
-                                i = i+1
-                                if self.slow_counter > 9:
-                                    self.person_approaching_counter = self.person_approaching_counter+1
-                            else:
-                                self.slow_counter = 0
-                                continue
+
+                    for x in range(-5, 6):
+                        if STOP_THRESHOLD_LOW < data[i + x] < STOP_THRESHOLD_HIGH:
+                            self.stop_counter += 1
+                            if self.stop_counter > 9:
+                                self.person_close_counter += 1
+                        else:
+                            self.stop_counter = 0
+                            continue
+
+                    for x in range(-5, 6):
+                        if SLOW_THRESHOLD_LOW < data[i] < SLOW_THRESHOLD_HIGH:
+                            self.slow_counter += 1
+                            i = i+1
+                            if self.slow_counter > 9:
+                                self.person_approaching_counter += 1
+                        else:
+                            self.slow_counter = 0
+                            continue
 
                 if self.person_close_counter > 1:  # To avoid environmental noise from stopping the robot
                     self.person_close = True
