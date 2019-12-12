@@ -34,8 +34,6 @@ class Controller:
 
         z_offset = 30
         self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=0)
-        self.get_image() #Take new image where previous fuse is gone
-        self.vision.detect_object()
         self.pick_and_place_part(PartEnum.FUSE.value, z_offset, fuse_id=1)
 
         z_offset = 30
@@ -43,8 +41,8 @@ class Controller:
 
         self.move_robot.move_out_of_view()
 
-    def pick_and_place_part(self, part_id, z_offset, fuse_id=0):
-        new_part_id, x, y, orientation, grip_width = self.get_part_location(part_id)
+    def pick_and_place_part(self, part_id, z_offset, fuse_id=-1):
+        new_part_id, x, y, orientation, grip_width = self.get_part_location(part_id, fuse_index=fuse_id)
         while x is None:
             print("[W]: Could not find required part in image, please move the part and try again. Part: ",
                   part_id_to_name(part_id))
@@ -82,9 +80,10 @@ class Controller:
         print("[I] Moving arm")
         self.move_robot.grip(x, y, orientation, part_id, grip_width)
 
-    def get_part_location(self, part_id):
+    def get_part_location(self, part_id, fuse_index=-1):
         class_names = convert_from_part_id(part_id)
-        new_part_id, x, y, orientation, grip_width = self.vision.find_parts(class_names)
+        new_part_id, x, y, orientation, grip_width = self.vision.find_parts(class_names, fuse_index)
+
         if x == -1 and y == -1:
             return None, None, None, None, None
         x, y, _ = self.aruco.calibrate(self.np_image, x, y)
@@ -95,7 +94,7 @@ class Controller:
                 input("Press Enter to continue...")
                 self.get_image()
                 self.vision.detect_object()
-                x, y, orientation = self.vision.find_parts(class_names)
+                new_part_id, x, y, orientation, grip_width = self.vision.find_parts(class_names)  # dont use fuse index here
                 x, y, _ = self.aruco.calibrate(self.np_image, x, y)
                 fuse_in_restricted_area = self.fuse_area_check(y)
         return new_part_id, x, y, orientation, grip_width

@@ -38,7 +38,7 @@ class Vision:
             sensors = profile.get_device().query_sensors()
             rgb_camera = sensors[1]
             rgb_camera.set_option(rs.option.white_balance, 4600)
-            rgb_camera.set_option(rs.option.exposure, 100)
+            rgb_camera.set_option(rs.option.exposure, 80)
             #rgb_camera.set_option(rs.option.saturation, 65)
             #rgb_camera.set_option(rs.option.contrast, 50)
 
@@ -58,13 +58,17 @@ class Vision:
         color_image_ready_to_save.save(self.image_path)
         return color_image
 
-    def find_parts(self, class_id):
+    def find_parts(self, class_id, fuse_index=-1):
         class_id1, class_id2 = class_id
         part = (-1, -1, -1, -1, -1)
         # result is an array of dictionaries
+        found_class_index = 0
         for i in range(len(self.results)):
             d = self.results[i]
             if (d['class'] == class_id1 or d['class'] == class_id2) and d['prob'] > 0.6:
+                if fuse_index > -1 and fuse_index != found_class_index:
+                    found_class_index += 1
+                    continue
                 part_class = d['class']
                 prob = d['prob']
                 width = d['right'] - d['left']
@@ -107,48 +111,6 @@ class Vision:
                 draw.text((x_coord, y_coord), d['class'])
         source_img.save('boundingboxes.png')
 
-    def find_flipped_parts(self):
-        results = self.detector.detect(self.image_path)
-        parts_to_flip = []
-        for i in range(len(results)):
-            d = results[i]
-            if d['class'] == 'BottomCoverFlipped' or d['class'] == 'BlueCover' or d['class'] == 'WhiteCover' or d['class'] == 'BlackCover' and d['prob'] > 0.6:
-                classify = d['class']
-                prob = d['prob']
-                width = d['right'] - d['left']
-                height = d['bottom'] - d['top']
-                x_coord = width / 2 + d['left']
-                y_coord = height / 2 + d['top']
-                if height > width:
-                    orientation = OrientationEnum.HORIZONTAL.value
-                elif width > height:
-                    orientation = OrientationEnum.VERTICAL.value
-                else:
-                    orientation = OrientationEnum.HORIZONTAL.value
-                    print("[W] Could not determine orientation, using 1 as default")
-                part_id = convert_to_part_id(classify)
-                part = (part_id, x_coord, y_coord, orientation)
-                parts_to_flip.append(part)
-            elif d['class'] == 'PCBFlipped' and d['prob'] > 0.6:
-                classify = d['class']
-                prob = d['prob']
-                width = d['right'] - d['left']
-                height = d['bottom'] - d['top']
-                x_coord = width / 2 + d['left']
-                y_coord = height / 2 + d['top']
-                part_id = PartEnum.PCB.value
-                if height > width:
-                    orientation = OrientationEnum.HORIZONTAL.value
-                elif width > height:
-                    orientation = OrientationEnum.VERTICAL.value
-                else:
-                    orientation = OrientationEnum.HORIZONTAL.value
-                print("[W] Could not determine orientation, using 1 as default")
-                part = (part_id, x_coord, y_coord, orientation)
-                parts_to_flip.append(part)
-        print(parts_to_flip)
-        return parts_to_flip
-
     def is_facing_right(self, np_image):
         result = self.orientationCNN.is_facing_right(np_image)
         print("[INFO] Part is facing right. {}".format(result))
@@ -159,4 +121,7 @@ class Vision:
 
 if __name__ == "__main__":
     hey = Vision()
-    hey.capture_image()
+    while True:
+        hey.capture_image()
+        hey.detect_object()
+        input()
